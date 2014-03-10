@@ -4,15 +4,26 @@
     android:versionCode="1"
     android:versionName="1.0" >
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    
+    
+    <!--  DEV PERMISSIONS -->
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+    
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="19" />
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/watttime_logo" 
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <!-- TODO change to ic_launcher (wtlogo) -->
         <activity
             android:name="com.github.WattTime.watttime_android.MainActivity"
             android:label="@string/app_name" >
