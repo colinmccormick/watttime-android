@@ -15,7 +15,7 @@
     <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
     
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="11"
         android:targetSdkVersion="19" />
 
     <application
@@ -23,9 +23,9 @@
         android:icon="@drawable/watttime_logo" 
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <!-- TODO change to ic_launcher (wtlogo) -->
+        <!-- TODO change name to ic_launcher (wtlogo) -->
         <activity
-            android:name="com.github.WattTime.watttime_android.MainActivity"
+            android:name="com.github.WattTime.watttime_android.Activities.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
