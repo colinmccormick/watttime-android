@@ -1,7 +1,7 @@
 /**
  * 
  */
-package Fragments;
+package com.github.WattTime.watttime_android.Fragments;
 
 import android.os.Bundle;
 import android.preference.PreferenceFragment;

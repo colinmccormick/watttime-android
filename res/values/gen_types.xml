@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- List of all possible types of power generation (for settings) -->
+    <string name="gen_0_title">Coal</string>
+    <string name="gen_0_subtitle">Burning ugly coal</string>
+    <string name="gen_1_title">Wind</string>
+    <string name="gen_1_subtitle">Windmill power</string>
+    <string name="gen_2_title">Biomass</string>
+    <string name="gen_2_subtitle">Burning natural things</string>
+    <string name="gen_3_title">Hydro-Electric Power</string>
+    <string name="gen_3_subtitle">Water flowing down a hill</string>
+    <string name="gen_4_title">Natural Gas</string>
+    <string name="gen_4_subtitle">Comes from the earth</string>
+    <string name="gen_5_title">Diesel</string>
+    <string name="gen_5_subtitle">Like gas but heavier</string>
+    <string name="gen_6_title">Nuclear</string>
+    <string name="gen_6_subtitle">Boom boom</string>
+
+</resources>

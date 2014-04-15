@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -34,22 +35,29 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.WattTime.watttime_android.R;
 import com.github.WattTime.watttime_android.DataModels.FuelDataList;
+import com.github.WattTime.Keys;
 
 public class MainActivity extends Activity {
 
 	/* Activity string with information on current API abbrev.*/
 	private String apiAbbrev;
+	
+	/* Comment goes here */
+	private FuelDataList mFuelData;
 
 	/* Object allowing us to change visibility of the progress bar
 	 * TODO change this to a spinning windmill. */
-	private ProgressBar progbar;
+	private ProgressBar mProgressBar;
+	
+	private TextView mPercentage;
 	
 	/* Resources for the navigation drawer */
-	private String[] mPlanetTitles;
+	private String[] mPlanetTitles; //FIXME
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -70,24 +78,22 @@ public class MainActivity extends Activity {
 		// Launch loading screen
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		progbar = (ProgressBar) findViewById(R.id.main_progressbar);
+		mProgressBar = (ProgressBar) findViewById(R.id.main_progressbar);
+		mPercentage = (TextView) findViewById(R.id.main_percentage);
 		
-		//Set up the Nav drawer
-		setContentView(R.layout.drawer_layout);
-		mPlanetTitles = getResources().getStringArray(R.array.navigation_array);
+		//DANGER CHANGING CONTENT VIEW STATUS!!!!
+		
+		// ----- Set up the Nav drawer ------- //
+		//setContentView(R.layout.drawer_layout);
+		mPlanetTitles = getResources().getStringArray(R.array.navigation_array); //TODO
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
-        Log.d("Create1", mPlanetTitles.toString());
-        Log.d("Create2", mDrawerList.toString());
-        // Set the adapter for the list view
-        //TODO setContentView(R.layout.drawer_list_item); ?
         mDrawerList.setAdapter(new ArrayAdapter<String>(this,
                 R.layout.drawer_list_item, mPlanetTitles));
         // Set the list's click listener
         mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
         
-        
-        mTitle = mDrawerTitle = getTitle(); //TODO wtf?
+        mTitle = mDrawerTitle = getTitle(); //TODO 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
                 R.drawable.ic_drawer, R.string.drawer_open, R.string.drawer_close) {
@@ -138,7 +144,9 @@ public class MainActivity extends Activity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
     
-		
+        // CHANGING CONTENT VIEW BACK TO MAIN!!!!!
+        
+        //setContentView(R.layout.activity_main);
 
 		// Get the last known network (coarse) location
 		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -175,7 +183,16 @@ public class MainActivity extends Activity {
 		if (debug1) {apiAbbrev = "ISONE";}
 
 		// Now that we have our ISO abbreviation, go ahead and pull the data for it
-
+		if (apiAbbrev != null) {
+			mFuelData = parseDataJSON(getApiData(makeDataUrl(apiAbbrev)));
+			double d = mFuelData.getCurrentPercent();
+			String percent = String.format("%2.1f", d * 100);
+			mPercentage.setText(percent)	;
+			mProgressBar.setVisibility(View.GONE);
+			mPercentage.setVisibility(View.VISIBLE);
+		} else {
+			//some sort of error behavior for bad apiabbrev.
+		}
 
 	}
     @Override
@@ -222,6 +239,7 @@ public class MainActivity extends Activity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         // If the nav drawer is open, hide action items related to the content view
+    	// Hide things that wouldn't make sense otherwise
         boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList); //use to check if the drawer is open
         return super.onPrepareOptionsMenu(menu);
     }
@@ -296,19 +314,21 @@ public class MainActivity extends Activity {
 				JSONArray jSON;
 
 				/*Pull JSON from server*/
+				StringBuilder sb = new StringBuilder();
 				try {
 					URL url = new URL(urlIn[0]);
 					HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 					conn.setReadTimeout(10000 /* milliseconds */);
 					conn.setConnectTimeout(15000 /* milliseconds */);
 					conn.setRequestMethod("GET");
+					conn.setRequestProperty("Authorization", "Token " + Keys.API_KEY);
 					conn.setDoInput(true);
 					conn.connect();
 					int response = conn.getResponseCode();
 					Log.d("APIabbrevGet", "The response is: " + response);
 					inStr = conn.getInputStream();
 					BufferedReader reader = new BufferedReader(new InputStreamReader(inStr, "UTF-8"), 8);
-					StringBuilder sb = new StringBuilder();
+					
 
 					String line = null;
 					while ((line = reader.readLine()) != null)
@@ -320,15 +340,25 @@ public class MainActivity extends Activity {
 					Log.e("GetAPIData", "Malformed URL: " + urlIn[0]);
 					return null;
 				} catch (JSONException e) {
-					Log.e("GetAPIData", "Error parsing Json");
-					Log.e("GETAPIDATA", e.getMessage());
-					return null;
+					Log.w("GetAPIData", "Error parsing JSON array, trying object");
+					try {
+						JSONObject obj = new JSONObject(sb.toString());
+						jSON = new JSONArray();
+						jSON.put(obj);
+					} catch (JSONException e1) {
+						Log.e("GetAPIData", "JSONObject parsing failed, bad JSON from server.");
+						//TODO Pop a toast here.
+						return null;
+					}
+					
 				} catch (IOException e) {
 					Log.e("GetAPIData", "IOError");
 					return null;
 				} finally {
 					try {
-						inStr.close();
+						if (inStr != null) {
+						  inStr.close();
+						}
 					} catch (IOException e) {
 						Log.e("GetAPIData", "IOError");
 						return null;
@@ -378,9 +408,18 @@ public class MainActivity extends Activity {
 	}
 
 	/**
-	 * 
+	 * TODO
 	 */
-	private FuelDataList parseDataJSON(JSONArray jSON) {return null;}
+	private FuelDataList parseDataJSON(JSONArray jSON) {
+		try {
+			return new FuelDataList(jSON.getJSONObject(0));
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			Log.e("MainActivity", "Couldn't parse something somewhere.");
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	/*
 	 * (non-Javadoc)

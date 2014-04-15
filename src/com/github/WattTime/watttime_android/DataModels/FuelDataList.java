@@ -3,28 +3,75 @@
  */
 package com.github.WattTime.watttime_android.DataModels;
 
+import java.util.ArrayList;
+
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 
 public class FuelDataList implements Parcelable {
-
-	public FuelDataList(JSONArray inp) {
-		//create point
+	private ArrayList<FuelDataPoint> dataPoints;
+	private String nextURLtoLoad;
+	
+	public FuelDataList(JSONObject jSON) throws JSONException {
+		Log.d("FDL", "1");
+		dataPoints = new ArrayList<FuelDataPoint>(12);
+		if (jSON != null && jSON.length() != 0) {
+			if (jSON.has("next")) {
+				Log.d("FDL", "2");
+				nextURLtoLoad = jSON.getString("next");
+			}
+			if (jSON.has("results")) {
+				Log.d("FDL", "3");
+				JSONArray arr = jSON.getJSONArray("results");
+				for(int k = 0; k < arr.length(); k += 1) {
+					Log.d("FDL", "4");
+					JSONObject obj = arr.getJSONObject(k);
+					if (obj != null) {
+						FuelDataPoint fDatPt = new FuelDataPoint(obj.getString("timestamp"));
+						JSONArray genmix = obj.getJSONArray("genmix");
+						for(int j = 0; j < genmix.length(); j += 1) {
+							JSONObject pt = genmix.getJSONObject(j);
+							fDatPt.addPoint(pt.getString("fuel"), pt.getDouble("gen_MW"));
+						}
+						Log.d("FDL", "5");
+						dataPoints.add(dataPoints.size(), fDatPt);
+					}
+				}
+			}
+		}
 	}
 
-	public FuelDataList(Parcel in) {
-		//inflate from parcel.
+	public String getNextURL() {
+		return nextURLtoLoad;
+	}
+	//THIS IS A HACK TODO FIXME
+	public double getCurrentPercent() {
+		return getCurrentPercent(new String[] {"biomass", "wind", "refuse", "biogas", "nuclear", "hydro"}); //TODO make this from defaults file
+	}
+	
+	public double getCurrentPercent(String[] prefs) {
+		return dataPoints.get(0).getPercentGreen(prefs);
 	}
 
-	/* (non-Javadoc)
-	 * @see android.os.Parcelable#describeContents()
+	public FuelDataList(Parcel in) throws JSONException {
+		this(new JSONObject()); //Had to avoid ambiguous error. (New one to me!)
+		for(FuelDataPoint point : (FuelDataPoint[]) in.readParcelableArray(null)) { //Uses default classloader CHECK?
+			dataPoints.add(point);
+		}
+		nextURLtoLoad = in.readString();
+	}
+
+	/* 
+	 * Black magic be here.
 	 */
 	@Override
 	public int describeContents() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -33,13 +80,20 @@ public class FuelDataList implements Parcelable {
 	 */
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
-		// TODO Auto-generated method stub
-
+		FuelDataPoint[] dp = new FuelDataPoint[dataPoints.size()];
+		dest.writeParcelableArray(dataPoints.toArray(dp), 0);
+		dest.writeString(nextURLtoLoad);
 	}
+	
 	public static final Parcelable.Creator<FuelDataList> CREATOR
 	= new Parcelable.Creator<FuelDataList>() {
 		public FuelDataList createFromParcel(Parcel in) {
-			return new FuelDataList(in);
+			try {
+				return new FuelDataList(in);
+			} catch (JSONException e) {
+				Log.wtf("FuelDataList", "oh my lord!");
+				return null;
+			}
 		}
 		public FuelDataList[] newArray(int size) {
 			return new FuelDataList[size];
