@@ -39,7 +39,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.WattTime.watttime_android.R;
+import com.github.WattTime.watttime_android.ASyncTasks.APIGet;
 import com.github.WattTime.watttime_android.DataModels.FuelDataList;
+import com.github.WattTime.watttime_android.Fragments.SettingsFragment;
 import com.github.WattTime.Keys;
 
 public class MainActivity extends Activity {
@@ -63,11 +65,7 @@ public class MainActivity extends Activity {
     private ActionBarDrawerToggle mDrawerToggle;
     private CharSequence mDrawerTitle;
     private CharSequence mTitle;
-
-	/*Debug codes*/
-	private final boolean debug0 = false; //This spoofs your present location to new england
-	private final boolean debug1 = false; //This sets the abbreviation after the API call to new england.
-
+    
 	/*
 	 * (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -81,15 +79,12 @@ public class MainActivity extends Activity {
 		mProgressBar = (ProgressBar) findViewById(R.id.main_progressbar);
 		mPercentage = (TextView) findViewById(R.id.main_percentage);
 		
-		//DANGER CHANGING CONTENT VIEW STATUS!!!!
-		
 		// ----- Set up the Nav drawer ------- //
-		//setContentView(R.layout.drawer_layout);
 		mPlanetTitles = getResources().getStringArray(R.array.navigation_array); //TODO
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
         mDrawerList.setAdapter(new ArrayAdapter<String>(this,
-                R.layout.drawer_list_item, mPlanetTitles));
+                R.layout.drawer_list_item, mPlanetTitles)); //This is where you should edit the adapter - can expand
         // Set the list's click listener
         mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
         
@@ -143,20 +138,12 @@ public class MainActivity extends Activity {
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
-    
-        // CHANGING CONTENT VIEW BACK TO MAIN!!!!!
-        
-        //setContentView(R.layout.activity_main);
 
 		// Get the last known network (coarse) location
 		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		String locationProvider = LocationManager.NETWORK_PROVIDER; //Change to GPS_PROVIDER for fine loc
 		Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
 
-		if (debug0) {
-			lastKnownLocation.setLatitude(-72.519);
-			lastKnownLocation.setLongitude(42.372);
-		}
 
 		// Check to see if we're recreating from a recent bundle
 		if (savedInstanceState != null) {
@@ -173,28 +160,44 @@ public class MainActivity extends Activity {
 			// Try and get the saved abbrev (save an api call)
 			if (TIME_DELTA < MAX_TIME && DISTANCE_DELTA < MAX_DISTANCE) {
 				String savedAb = savedInstanceState.getString("apiAbbrev");
-				apiAbbrev = savedAb != null ? savedAb : parseAbJSON(getApiData(makeAbUrl(lastKnownLocation))); //Make sure its not null!
+				apiAbbrev = savedAb;
 			}
 
+		} else if (internetConnected()) {
+			if (apiAbbrev == null) {
+				//apiabbrev must be generated new.
+				new APIGet() {
+					@Override
+					protected void onPostExecute(JSONArray jSON) {
+						apiAbbrev = parseAbJSON(jSON);
+						getPercentData();
+					}
+				}.execute(makeAbUrl(lastKnownLocation));
+			} else {
+				//API abbrev was retrieved from the stored data.
+				getPercentData();
+			}
 		} else {
-			apiAbbrev = parseAbJSON(getApiData(makeAbUrl(lastKnownLocation)));
+			//raise error - no internet.
+			/*This means there's no network connection, so raise an error */
+			Toast.makeText(this, R.string.connectivity_error, Toast.LENGTH_SHORT).show(); //TODO Better error dialog
 		}
-
-		if (debug1) {apiAbbrev = "ISONE";}
-
-		// Now that we have our ISO abbreviation, go ahead and pull the data for it
-		if (apiAbbrev != null) {
-			mFuelData = parseDataJSON(getApiData(makeDataUrl(apiAbbrev)));
-			double d = mFuelData.getCurrentPercent();
-			String percent = String.format("%2.1f", d * 100);
-			mPercentage.setText(percent)	;
-			mProgressBar.setVisibility(View.GONE);
-			mPercentage.setVisibility(View.VISIBLE);
-		} else {
-			//some sort of error behavior for bad apiabbrev.
-		}
-
 	}
+	
+	private void getPercentData() {
+		new APIGet() {
+			@Override
+			protected void onPostExecute(JSONArray jSON) {
+				mFuelData = parseDataJSON(jSON);
+				double d = mFuelData.getCurrentPercent();
+				String percent = String.format(Locale.US, "%2.1f", d * 100);
+				mPercentage.setText(percent)	;
+				mProgressBar.setVisibility(View.GONE);
+				mPercentage.setVisibility(View.VISIBLE);
+			}
+		}.execute(makeDataUrl(apiAbbrev));
+	}
+	
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -215,9 +218,43 @@ public class MainActivity extends Activity {
         if (mDrawerToggle.onOptionsItemSelected(item)) {
           return true;
         }
-        // Handle your other action bar items...
-
-        return super.onOptionsItemSelected(item);
+        // Now handle code for clicking on settings button(s)
+        switch (item.getItemId()) {
+        case R.id.action_settings:
+        	
+        	return launchSettingsFragment();
+        default:
+        	return super.onOptionsItemSelected(item);
+        }
+    }
+    
+    private boolean launchSettingsFragment() {
+    	// Hide the progressbar/percentage indicators before launching the fragment.
+    	if (mProgressBar != null && mProgressBar.getVisibility() == View.VISIBLE) {
+    		mProgressBar.setVisibility(View.INVISIBLE);
+    		Log.d("SettingsFragment", "Changing visiblity of progressbar to invisible.");
+    	} else if (mPercentage != null && mPercentage.getVisibility() == View.VISIBLE) {
+    		mPercentage.setVisibility(View.INVISIBLE);
+    		Log.d("SettingsFragment", "Changing visiblity of percentage to invisible");
+    	}
+    	getFragmentManager()
+    	.beginTransaction()
+    	.replace(android.R.id.content, new SettingsFragment() {
+    		@Override 
+    		public void onDestroy() {
+    			if (mProgressBar != null && mProgressBar.getVisibility() == View.INVISIBLE) {
+    				Log.d("SettingsFragment", "Changing visiblity of progressbar back to visible.");
+    				mProgressBar.setVisibility(View.VISIBLE);
+    			} else if (mPercentage != null && mPercentage.getVisibility() == View.INVISIBLE) {
+    				Log.d("SettingsFragment", "Changing visiblity of percentage back to visible");
+    				mPercentage.setVisibility(View.VISIBLE); //TODO check for placeholder text then set visibility
+    			}
+    			super.onDestroy();
+    		}
+    	})
+    	.addToBackStack(null)
+    	.commit();
+    	return true;
     }
     
 	/* Used for the nav drawer actions. */
@@ -289,95 +326,17 @@ public class MainActivity extends Activity {
 	}
 
 	/**
-	 * Utility function to return the JSON provided by the server at the input URL string.
-	 * Currently logs an error if there is an error, and returns null
-	 * Otherwise returns the JSON delivered by the server.
-	 * @return null or the JSON delivered by the server
-	 * @errors Pops up an error if no network, otherwise returns null if other type of error
+	 * Utility function to determine whether the internet is connected or not
+	 * @return Boolean representing internet connectivity.
 	 */
-	private JSONArray getApiData(String APIurl) {
+	private boolean internetConnected() {
 		/* Check for network connection! */
 		ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 		if (networkInfo == null || !networkInfo.isConnected()) {
-			/*This means there's no network connection, so raise an error */
-			Toast.makeText(this, R.string.connectivity_error, Toast.LENGTH_SHORT).show(); //TODO Better error dialog
-			return null;
+			return false;
 		}
-
-		/* Fire off a new async task to get the JSON from network */
-		class getFromAPI extends AsyncTask<String, Void, JSONArray> {
-			@Override
-			protected JSONArray doInBackground(String... urlIn) {
-				Log.d("APIDATA", "Trying to get API @ " + urlIn[0]);
-				InputStream inStr = null;
-				JSONArray jSON;
-
-				/*Pull JSON from server*/
-				StringBuilder sb = new StringBuilder();
-				try {
-					URL url = new URL(urlIn[0]);
-					HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-					conn.setReadTimeout(10000 /* milliseconds */);
-					conn.setConnectTimeout(15000 /* milliseconds */);
-					conn.setRequestMethod("GET");
-					conn.setRequestProperty("Authorization", "Token " + Keys.API_KEY);
-					conn.setDoInput(true);
-					conn.connect();
-					int response = conn.getResponseCode();
-					Log.d("APIabbrevGet", "The response is: " + response);
-					inStr = conn.getInputStream();
-					BufferedReader reader = new BufferedReader(new InputStreamReader(inStr, "UTF-8"), 8);
-					
-
-					String line = null;
-					while ((line = reader.readLine()) != null)
-					{
-						sb.append(line + "\n");
-					}
-					jSON = new JSONArray(sb.toString());
-				} catch (MalformedURLException e) {
-					Log.e("GetAPIData", "Malformed URL: " + urlIn[0]);
-					return null;
-				} catch (JSONException e) {
-					Log.w("GetAPIData", "Error parsing JSON array, trying object");
-					try {
-						JSONObject obj = new JSONObject(sb.toString());
-						jSON = new JSONArray();
-						jSON.put(obj);
-					} catch (JSONException e1) {
-						Log.e("GetAPIData", "JSONObject parsing failed, bad JSON from server.");
-						//TODO Pop a toast here.
-						return null;
-					}
-					
-				} catch (IOException e) {
-					Log.e("GetAPIData", "IOError");
-					return null;
-				} finally {
-					try {
-						if (inStr != null) {
-						  inStr.close();
-						}
-					} catch (IOException e) {
-						Log.e("GetAPIData", "IOError");
-						return null;
-					}
-				}
-				return jSON;
-			}
-		}
-
-		AsyncTask<String, Void, JSONArray> task = new getFromAPI().execute(APIurl);
-		try {
-			return task.get();
-		} catch (InterruptedException e) {
-			Log.e("GetAPIData", "Interrupted");
-			return null;
-		} catch (ExecutionException e) {
-			Log.e("GetAPIData", "Execution error " + e.getMessage());
-			return null;
-		}
+		return true;
 	}
 
 	/**
