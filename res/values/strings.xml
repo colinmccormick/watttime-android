@@ -12,6 +12,7 @@
     
     <string name="drawer_open">ABC123</string>
     <string name="drawer_close">DEF456</string>
+    <string name="reset_defaults">Reset to defaults</string>
     
     <string name="data_api_stem" formatted="false">http://watttime-grid-api.herokuapp.com/api/v1/datapoints/?ba=%s&amp;format=json</string>
     <string name="abbr_api_stem" formatted="false">http://watttime-grid-api.herokuapp.com/api/v1/balancing_authorities/?format=json&amp;loc=POINT+%%28%+09.4f%%20%+09.4f%%29</string>

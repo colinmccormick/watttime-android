@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import org.json.JSONArray;
@@ -14,6 +17,7 @@ import org.json.JSONObject;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.location.Location;
@@ -22,6 +26,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -489,7 +494,26 @@ public class MainActivity extends Activity {
 	private void launchPercent(FuelDataList fuelData) {
 		mFuelData = fuelData;
 		
-		double d = mFuelData.getCurrentPercent();
+		
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		ArrayList<String> greens = new ArrayList<String>(12);
+		if (sharedPrefs != null) {
+			for (Entry<String, ?> kp : sharedPrefs.getAll().entrySet()) {
+				try {
+					boolean val = sharedPrefs.getBoolean(kp.getKey(), false);
+					if (val) {
+						greens.add(kp.getKey());
+					}
+				} catch (ClassCastException e) {
+					//pass
+				}
+			}
+		}
+		String[] renewables = new String[12];
+		renewables = greens.toArray(renewables);
+		Log.d("User defined prefs", renewables == null ? "" : Arrays.toString(renewables));
+		
+		double d = mFuelData.getCurrentPercent(renewables);
 		
 		String percentFormat = mRes.getString(R.string.percentage_format);
 		String percent = String.format(Locale.US, percentFormat, d * 100);

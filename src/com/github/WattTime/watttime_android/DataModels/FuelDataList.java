@@ -45,13 +45,13 @@ public class FuelDataList implements Parcelable {
 	public String getNextURL() {
 		return nextURLtoLoad;
 	}
-	//THIS IS A HACK TODO FIXME
-	public double getCurrentPercent() {
-		return getCurrentPercent(new String[] {"biomass", "wind", "refuse", "biogas", "nuclear", "hydro"}); //TODO make this from defaults file
-	}
 	
 	public double getCurrentPercent(String[] prefs) {
-		return dataPoints.get(0).getPercentGreen(prefs);
+		if (prefs == null) {
+			return -1;
+		} else {
+			return dataPoints.get(0).getPercentGreen(prefs);
+		}
 	}
 
 	public FuelDataList(Parcel in) throws JSONException {
