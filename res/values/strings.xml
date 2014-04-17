@@ -3,18 +3,26 @@
 
     <string name="app_name">WattTime</string>
     <string name="action_settings">Settings</string>
+    <string name="action_refresh">Refresh</string>
     <string name="hello_world">Hello world!</string>
+    
     <string name="connectivity_error">Could not connect to network</string>
     <string name="server_error">The server encountered an error, please try again.</string>
     <string name="generation_types_header">Are these clean?</string>
+    
     <string name="drawer_open">ABC123</string>
     <string name="drawer_close">DEF456</string>
+    
+    <string name="data_api_stem" formatted="false">http://watttime-grid-api.herokuapp.com/api/v1/datapoints/?ba=%s&amp;format=json</string>
+    <string name="abbr_api_stem" formatted="false">http://watttime-grid-api.herokuapp.com/api/v1/balancing_authorities/?format=json&amp;loc=POINT+%%28%+09.4f%%20%+09.4f%%29</string>
 
+    <string name="percentage_format" formatted="false">%2.1f%%</string>
+    
     <string-array name="navigation_array">
-        <item>Mercury</item>
-        <item>Venus</item>
-        <item>Earth</item>
-        <item>Mars</item>
+        <item>Home</item>
+        <item>Embedded Devices</item>
+        <item>Settings</item>
+        <item>About</item>
     </string-array>
 
 </resources>

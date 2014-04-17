@@ -20,7 +20,7 @@ import com.github.WattTime.Keys;
 public class APIGet extends AsyncTask<String, Void, JSONArray> {
 	@Override
 	protected JSONArray doInBackground(String... urlIn) {
-		Log.d("APIDATA", "Trying to get API @ " + urlIn[0]);
+		Log.d("APIConnection", "Trying to get API @ " + urlIn[0]);
 		InputStream inStr = null;
 		JSONArray jSON;
 
@@ -29,6 +29,7 @@ public class APIGet extends AsyncTask<String, Void, JSONArray> {
 		try {
 			URL url = new URL(urlIn[0]);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			Log.d("APIConnection", "Opened a connection");
 			conn.setReadTimeout(10000 /* milliseconds */);
 			conn.setConnectTimeout(15000 /* milliseconds */);
 			conn.setRequestMethod("GET");

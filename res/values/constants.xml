@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+     <integer name="min_data_refresh">300000</integer>
+     <integer name="max_distance_change">32187</integer>
+</resources>

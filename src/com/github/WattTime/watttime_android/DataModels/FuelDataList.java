@@ -19,18 +19,14 @@ public class FuelDataList implements Parcelable {
 	private String nextURLtoLoad;
 	
 	public FuelDataList(JSONObject jSON) throws JSONException {
-		Log.d("FDL", "1");
 		dataPoints = new ArrayList<FuelDataPoint>(12);
 		if (jSON != null && jSON.length() != 0) {
 			if (jSON.has("next")) {
-				Log.d("FDL", "2");
 				nextURLtoLoad = jSON.getString("next");
 			}
 			if (jSON.has("results")) {
-				Log.d("FDL", "3");
 				JSONArray arr = jSON.getJSONArray("results");
 				for(int k = 0; k < arr.length(); k += 1) {
-					Log.d("FDL", "4");
 					JSONObject obj = arr.getJSONObject(k);
 					if (obj != null) {
 						FuelDataPoint fDatPt = new FuelDataPoint(obj.getString("timestamp"));
@@ -39,7 +35,6 @@ public class FuelDataList implements Parcelable {
 							JSONObject pt = genmix.getJSONObject(j);
 							fDatPt.addPoint(pt.getString("fuel"), pt.getDouble("gen_MW"));
 						}
-						Log.d("FDL", "5");
 						dataPoints.add(dataPoints.size(), fDatPt);
 					}
 				}

@@ -1,37 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
-    
-    <PreferenceCategory
-            android:title="@string/generation_types_header">
-
+    <PreferenceCategory android:title="@string/generation_types_header" >
         <CheckBoxPreference
-                android:key="checkbox_preference_0"
-                android:title="@string/gen_0_title"
-                android:summary="@string/gen_0_subtitle" />
+            android:defaultValue="@bool/gen_0_default"
+            android:key="@string/gen_0_key"
+            android:summary="@string/gen_0_subtitle"
+            android:title="@string/gen_0_title" />
         <CheckBoxPreference
-                android:key="checkbox_preference_1"
-                android:title="@string/gen_1_title"
-                android:summary="@string/gen_1_subtitle" />
+            android:defaultValue="@bool/gen_1_default"
+            android:key="@string/gen_1_key"
+            android:summary="@string/gen_1_subtitle"
+            android:title="@string/gen_1_title" />
         <CheckBoxPreference
-                android:key="checkbox_preference_2"
-                android:title="@string/gen_2_title"
-                android:summary="@string/gen_2_subtitle" />
+            android:defaultValue="@bool/gen_2_default"
+            android:key="@string/gen_2_key"
+            android:summary="@string/gen_2_subtitle"
+            android:title="@string/gen_2_title" />
         <CheckBoxPreference
-                android:key="checkbox_preference_3"
-                android:title="@string/gen_3_title"
-                android:summary="@string/gen_3_subtitle" />
+            android:defaultValue="@bool/gen_3_default"
+            android:key="@string/gen_3_key"
+            android:summary="@string/gen_3_subtitle"
+            android:title="@string/gen_3_title" />
         <CheckBoxPreference
-                android:key="checkbox_preference_4"
-                android:title="@string/gen_4_title"
-                android:summary="@string/gen_4_subtitle" />
+            android:defaultValue="@bool/gen_4_default"
+            android:key="@string/gen_4_key"
+            android:summary="@string/gen_4_subtitle"
+            android:title="@string/gen_4_title" />
         <CheckBoxPreference
-                android:key="checkbox_preference_5"
-                android:title="@string/gen_5_title"
-                android:summary="@string/gen_5_subtitle" />
+            android:defaultValue="@bool/gen_5_default"
+            android:key="@string/gen_5_key"
+            android:summary="@string/gen_5_subtitle"
+            android:title="@string/gen_5_title" />
         <CheckBoxPreference
-                android:key="checkbox_preference_6"
-                android:title="@string/gen_6_title"
-                android:summary="@string/gen_6_subtitle" />
-        
+            android:defaultValue="@bool/gen_6_default"
+            android:key="@string/gen_6_key"
+            android:summary="@string/gen_6_subtitle"
+            android:title="@string/gen_6_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_7_default"
+            android:key="@string/gen_7_key"
+            android:summary="@string/gen_7_subtitle"
+            android:title="@string/gen_7_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_8_default"
+            android:key="@string/gen_8_key"
+            android:summary="@string/gen_8_subtitle"
+            android:title="@string/gen_8_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_9_default"
+            android:key="@string/gen_9_key"
+            android:summary="@string/gen_9_subtitle"
+            android:title="@string/gen_9_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_10_default"
+            android:key="@string/gen_10_key"
+            android:summary="@string/gen_10_subtitle"
+            android:title="@string/gen_10_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_11_default"
+            android:key="@string/gen_11_key"
+            android:summary="@string/gen_11_subtitle"
+            android:title="@string/gen_11_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_12_default"
+            android:key="@string/gen_12_key"
+            android:summary="@string/gen_12_subtitle"
+            android:title="@string/gen_12_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_13_default"
+            android:key="@string/gen_13_key"
+            android:summary="@string/gen_13_subtitle"
+            android:title="@string/gen_13_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_14_default"
+            android:key="@string/gen_14_key"
+            android:summary="@string/gen_14_subtitle"
+            android:title="@string/gen_14_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_15_default"
+            android:key="@string/gen_15_key"
+            android:summary="@string/gen_15_subtitle"
+            android:title="@string/gen_15_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_16_default"
+            android:key="@string/gen_16_key"
+            android:summary="@string/gen_16_subtitle"
+            android:title="@string/gen_16_title" />
+        <CheckBoxPreference
+            android:defaultValue="@bool/gen_17_default"
+            android:key="@string/gen_17_key"
+            android:summary="@string/gen_17_subtitle"
+            android:title="@string/gen_17_title" />
     </PreferenceCategory>
 </PreferenceScreen>

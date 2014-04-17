@@ -1,19 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<!-- List of all possible types of power generation (for settings) -->
-    <string name="gen_0_title">Coal</string>
-    <string name="gen_0_subtitle">Burning ugly coal</string>
-    <string name="gen_1_title">Wind</string>
-    <string name="gen_1_subtitle">Windmill power</string>
-    <string name="gen_2_title">Biomass</string>
-    <string name="gen_2_subtitle">Burning natural things</string>
-    <string name="gen_3_title">Hydro-Electric Power</string>
-    <string name="gen_3_subtitle">Water flowing down a hill</string>
-    <string name="gen_4_title">Natural Gas</string>
-    <string name="gen_4_subtitle">Comes from the earth</string>
-    <string name="gen_5_title">Diesel</string>
+
+    <!-- List of all possible types of power generation (for settings) -->
+    <!-- Would put these in an array, but can't reference that via XML. -->
+    <string name="gen_0_key">biogas</string>
+    <string name="gen_0_title">Biogas</string>
+    <string name="gen_0_subtitle">Renewable energy from Biogas or landfill gas</string>
+
+    <bool name="gen_0_default">true</bool>
+
+    <string name="gen_1_key">biomass</string>
+    <string name="gen_1_title">Biomass</string>
+    <string name="gen_1_subtitle">Renewable energy from burning wood or other Biomass</string>
+
+    <bool name="gen_1_default">true</bool>
+
+    <string name="gen_2_key">coal</string>
+    <string name="gen_2_title">Coal</string>
+    <string name="gen_2_subtitle">Thermal power from Coal</string>
+
+    <bool name="gen_2_default">false</bool>
+
+    <string name="gen_3_key">geo</string>
+    <string name="gen_3_title">Geothermal</string>
+    <string name="gen_3_subtitle">Renewable Geothermal energy</string>
+
+    <bool name="gen_3_default">true</bool>
+
+    <string name="gen_4_key">hydro</string>
+    <string name="gen_4_title">Hydroelectric</string>
+    <string name="gen_4_subtitle">short desc of hydro power</string>
+
+    <bool name="gen_4_default">true</bool>
+
+    <string name="gen_5_key">natgas</string>
+    <string name="gen_5_title">Natural Gas</string>
     <string name="gen_5_subtitle">Like gas but heavier</string>
-    <string name="gen_6_title">Nuclear</string>
-    <string name="gen_6_subtitle">Boom boom</string>
+
+    <bool name="gen_5_default">false</bool>
+
+    <string name="gen_6_key">nonwind</string>
+    <string name="gen_6_title">Non-wind energy</string>
+    <string name="gen_6_subtitle">Not sure what this really means.</string>
+
+    <bool name="gen_6_default">true</bool>
+
+    <string name="gen_7_key">nuclear</string>
+    <string name="gen_7_title">Nuclear</string>
+    <string name="gen_7_subtitle">Big boom, you want is clean?</string>
+
+    <bool name="gen_7_default">true</bool>
+
+    <string name="gen_8_key">oil</string>
+    <string name="gen_8_title">Oil (Diesel)</string>
+    <string name="gen_8_subtitle">Using Diesel or other oil to produce power</string>
+
+    <bool name="gen_8_default">false</bool>
+
+    <string name="gen_9_key">other</string>
+    <string name="gen_9_title">Other Power Sources</string>
+    <string name="gen_9_subtitle">Magic power!</string>
+
+    <bool name="gen_9_default">false</bool>
+
+    <string name="gen_10_key">refuse</string>
+    <string name="gen_10_title">Refuse</string>
+    <string name="gen_10_subtitle">Burning trash to produce power</string>
+
+    <bool name="gen_10_default">true</bool>
+
+    <string name="gen_11_key">renewable</string>
+    <string name="gen_11_title">General renewables</string>
+    <string name="gen_11_subtitle">Unspecified types of renewable energy</string>
+
+    <bool name="gen_11_default">true</bool>
+
+    <string name="gen_12_key">smhydro</string>
+    <string name="gen_12_title">Hydroelectric</string>
+    <string name="gen_12_subtitle">Small scale hydroelectric power</string>
+
+    <bool name="gen_12_default">true</bool>
+
+    <string name="gen_13_key">solar</string>
+    <string name="gen_13_title">All solar energy</string>
+    <string name="gen_13_subtitle">Sun power! </string>
+
+    <bool name="gen_13_default">true</bool>
+
+    <string name="gen_14_key">solarpv</string>
+    <string name="gen_14_title">Solar from Photovoltaics</string>
+    <string name="gen_14_subtitle">Solar power specifically from Photovoltaics</string>
+
+    <bool name="gen_14_default">true</bool>
+
+    <string name="gen_15_key">solarth</string>
+    <string name="gen_15_title">Thermal Based Solar</string>
+    <string name="gen_15_subtitle">Not sure what this really means.</string>
+
+    <bool name="gen_15_default">true</bool>
+
+    <string name="gen_16_key">thermal</string>
+    <string name="gen_16_title">Thermal Power</string>
+    <string name="gen_16_subtitle">The earth heats something for this</string>
+
+    <bool name="gen_16_default">true</bool>
+
+    <string name="gen_17_key">wind</string>
+    <string name="gen_17_title">Wind</string>
+    <string name="gen_17_subtitle">Windmills or something!</string>
+
+    <bool name="gen_17_default">true</bool>
 
 </resources>

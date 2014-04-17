@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.format.Time;
-import android.util.Log;
 
 
 public class FuelDataPoint implements Parcelable {
@@ -39,7 +38,6 @@ public class FuelDataPoint implements Parcelable {
 	public void addPoint(String fuel, double value) {
 		dataPts.put(fuel,value);
 		totalMW += value;
-		Log.d("FuelDataPoint", fuel + " " + Double.toString(value));
 	}
 	
 	public double getPercentGreen(String[] prefs) {
@@ -68,7 +66,7 @@ public class FuelDataPoint implements Parcelable {
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeString(dataTime.format3339(false));
 		Bundle bundle = new Bundle();
-		bundle.putSerializable("map", dataPts);
+		bundle.putSerializable("map", dataPts); //TODO Fix? There has to be a better way for this.
 		dest.writeBundle(bundle);
 	}
 	
