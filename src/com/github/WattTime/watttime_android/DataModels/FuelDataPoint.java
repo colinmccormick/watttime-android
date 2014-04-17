@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.format.Time;
+import android.util.Log;
 
 
 public class FuelDataPoint implements Parcelable {
@@ -26,6 +27,11 @@ public class FuelDataPoint implements Parcelable {
 		dataTime = new Time();
 		dataTime.parse3339(UTCTime);
 		dataPts = new HashMap<String, Double>();
+		Log.i("Timepoint", dataTime.toString());
+	}
+	public FuelDataPoint(Time timeIn) {
+		dataTime = timeIn;
+		dataPts = new HashMap<String, Double>();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -41,6 +47,9 @@ public class FuelDataPoint implements Parcelable {
 	}
 	
 	public double getPercentGreen(String[] prefs) {
+		if (prefs == null) {
+			return -1;
+		}
 		double accum = 0;
 		for (String key : prefs) {
 			if (dataPts.containsKey(key)) {
@@ -51,6 +60,12 @@ public class FuelDataPoint implements Parcelable {
 		return accum / totalMW;
 	}
 	
+	public Time getTimeCreated() {
+		return dataTime;
+	}
+	
+	
+	/* ------------------------ PARCELABLE METHODS ------------------- */
 	/* (non-Javadoc)
 	 * @see android.os.Parcelable#describeContents()
 	 */

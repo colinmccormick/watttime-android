@@ -41,6 +41,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidplot.xy.LineAndPointFormatter;
+import com.androidplot.xy.PointLabelFormatter;
+import com.androidplot.xy.XYPlot;
 import com.github.WattTime.watttime_android.R;
 import com.github.WattTime.watttime_android.ASyncTasks.APIGet;
 import com.github.WattTime.watttime_android.DataModels.FuelDataList;
@@ -51,20 +54,21 @@ public class MainActivity extends Activity {
 	/* Activity string with information on current API abbrev.*/
 	private String apiAbbrev;
 
-	/* Comment goes here */
+	/* Internal datamodel holding the most recent fuel data. */
 	private FuelDataList mFuelData;
 
-	/* Object allowing us to change visibility of the progress bar
-	 * TODO change this to a spinning windmill. */
-	private ProgressBar mProgressBar;
-
+	/* View objects that need to be edited by Java.*/
+	private ProgressBar mProgressBar; //TODO Change to windmill
 	private TextView mPercentage;
-
 	private Menu mMenu;
+	private XYPlot mPlot;
 
+	/*Constant filename for caching data */
 	private final String TEMPFILENAME = "datapoints";
-	
+
+	/*Resources file so we don't have to load it over and over */
 	private Resources mRes; 
+
 	/* Resources for the navigation drawer */
 	private String[] mNavigationItems;
 	private DrawerLayout mDrawerLayout;
@@ -82,15 +86,17 @@ public class MainActivity extends Activity {
 	@SuppressWarnings("resource") //scanner is tossed after use.
 	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState) { //TODO check if preferences have changed, reload data
 
 		// Launch loading screen
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		mProgressBar = (ProgressBar) findViewById(R.id.main_progressbar);
+		mPlot = (XYPlot) findViewById(R.id.main_xyplot_WTF);
 		mPercentage = (TextView) findViewById(R.id.main_percentage);
 		mRes = getResources();
-
+		
+		
 		// ----- Set up the Nav drawer ------- //
 		mNavigationItems = mRes.getStringArray(R.array.navigation_array);
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -146,7 +152,7 @@ public class MainActivity extends Activity {
 		//Load some constants about data age.
 		long MAX_DATA_AGE = mRes.getInteger(R.integer.min_data_refresh);
 		double MAX_DISTANCE = mRes.getInteger(R.integer.max_distance_change);
-		
+
 		// Check to see if we're recreating from a recent bundle
 		if (savedInstanceState != null) {
 			Log.d("onCreate", "trying to create from previous bundle");
@@ -166,39 +172,47 @@ public class MainActivity extends Activity {
 					launchPercent(fuelData);
 				} //otherwise try elsewhere.
 			} 
-		//Check to see if we can recreate from cached data
+			//Check to see if we can recreate from cached data
 		} else if (file != null && file.length() > 0) {
 			Log.d("Lifecycle", "The saved file exists, checking it.");
 			JSONArray jSON = null;
 			try {
 				//Read our saved file
 				jSON = new JSONArray(new Scanner(file).useDelimiter("\\A").next());
-				
+
 				//Pull in the old location
 				Location oldLoc = new Location(LocationManager.NETWORK_PROVIDER);
 				double lat = jSON.getJSONObject(1).getDouble("lat");
 				double lon = jSON.getJSONObject(1).getDouble("lon");
 				oldLoc.setLatitude(lat);
 				oldLoc.setLongitude(lon);
-				
+
 				//Calculate distance and time deltas, check if they're allowable.
 				float DISTANCE_DELTA = lastKnownLocation.distanceTo(oldLoc);
 				long TIME_SAVED = file.lastModified();
 				long TIME_DELTA = System.currentTimeMillis() - TIME_SAVED;
-				
+
 				//If they are, then file is OK to create from.
 				if (DISTANCE_DELTA < MAX_DISTANCE) {
 					Log.d("Lifecycle", "File was good to pull api abbrev from");
-					apiAbbrev = pullApiAbbrev(jSON.getJSONObject(0).getString("next"));
-					if (TIME_DELTA < MAX_DATA_AGE) {
-						Log.d("Lifecycle", "File was good to pull old data from");
-						doPostPercentGet(jSON, false);
+					String url = jSON.getJSONObject(0).getString("next");
+					Log.d("url", url);
+					if (!url.equals("null") && url != null) { //Need to check and see if it pulled this correctly.
+						//If it didn't it's a corrupt save file.
+						//Furthermore check for the JSON null (Which is different from regular null)
+						apiAbbrev = pullApiAbbrev(url);
+						if (TIME_DELTA < MAX_DATA_AGE) {
+							Log.d("Lifecycle", "File was good to pull old data from");
+							doPostPercentGet(jSON, false);
+						}
 					}
 				}
 			} catch (JSONException e) {
 				Log.e("MainActivity", "Couldn't create from saved json");
+				//This means our savefile was so corrupt it couldn't load, but it's
+				//a nonfatal error, because it can reload the data from the server.
 			} catch (FileNotFoundException e) {
-				Log.wtf("Files", "Should never get here..!");
+				Log.wtf("Files", "Should never get here because it checks if the file's length is nonzero");
 			}
 		}
 		//So somewhere we didn't pick up the correct data
@@ -214,13 +228,15 @@ public class MainActivity extends Activity {
 					}
 				}.execute(makeAbUrl(lastKnownLocation));
 			} else {
-				//API abbrev was retrieved from the stored data.
+				//API abbrev was retrieved from the stored data but not the percent data.
 				getPercentData();
 			}
 		} else if (!internetConnected()){
 			/*This means there's no network connection, so raise an error */
 			throwFatalNetworkError();
+			return;
 		}
+		launchGraph();
 	}
 
 	@Override
@@ -269,6 +285,19 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	private boolean launchGraph() {
+		if (mPlot == null || mFuelData == null || mFuelData.size() == 0) {
+			return false;
+		} else {
+			LineAndPointFormatter series1Format = new LineAndPointFormatter();
+			series1Format.setPointLabelFormatter(new PointLabelFormatter());
+			series1Format.configure(this,R.xml.line_point_formatter_with_plf1);
+			mPlot.addSeries(mFuelData.getLastDayPoints(), series1Format);
+			mPlot.setVisibility(View.VISIBLE);
+			return true;
+		}
+	}
+
 	/* -------------- NAVIGATION DRAWER METHODS ------------- */
 
 	private boolean launchSettingsFragment() {
@@ -279,6 +308,8 @@ public class MainActivity extends Activity {
 		} else if (mPercentage != null && mPercentage.getVisibility() == View.VISIBLE) {
 			mPercentage.setVisibility(View.INVISIBLE);
 			Log.d("SettingsFragment", "Changing visiblity of percentage to invisible");
+		} else if (mPlot != null && mPlot.getVisibility() == View.VISIBLE) {
+			mPlot.setVisibility(View.INVISIBLE);
 		}
 		getFragmentManager()
 		.beginTransaction()
@@ -291,6 +322,8 @@ public class MainActivity extends Activity {
 				} else if (mPercentage != null && mPercentage.getVisibility() == View.INVISIBLE) {
 					Log.d("SettingsFragment", "Changing visiblity of percentage back to visible");
 					mPercentage.setVisibility(View.VISIBLE);
+				} else if (mPlot != null && mPlot.getVisibility() == View.INVISIBLE) {
+					mPlot.setVisibility(View.VISIBLE);
 				}
 				super.onDestroy();
 			}
@@ -409,11 +442,14 @@ public class MainActivity extends Activity {
 	}
 
 	private FuelDataList parseDataJSON(JSONArray jSON) {
+		
 		if (jSON == null) {
 			return null;
 		}
+		Log.d("Attempting to parse JSON", jSON.toString());
+		Log.d("Renewableprefs", Arrays.toString(getRenewablePrefs()));
 		try {
-			return new FuelDataList(jSON.getJSONObject(0));
+			return new FuelDataList(jSON.getJSONObject(0), getRenewablePrefs());
 		} catch (JSONException e) {
 			Log.e("MainActivity", "Couldn't parse something somewhere.");
 			e.printStackTrace();
@@ -459,8 +495,18 @@ public class MainActivity extends Activity {
 		if (jSON == null) {
 			throwFatalServerError();
 			return;
+		} else {
+			FuelDataList data = parseDataJSON(jSON);
+			//We have to check if our data is actually there. (Weird edge case error)
+			if (data.size() > 0) {
+				Log.d("dppget", "data was size.");
+				launchPercent(data);
+			} else if (apiAbbrev == null || data.size() < 0) {
+				Log.d("dppget", "apiabbrev null");
+				Log.e("Dppget", "Something's fucky"); //FIXME
+				//getPercentData();
+			}
 		}
-		launchPercent(parseDataJSON(jSON));
 		
 		//Save our JSON to a file so we might not need to get it next time.
 		if (saveIt) {
@@ -493,27 +539,10 @@ public class MainActivity extends Activity {
 	
 	private void launchPercent(FuelDataList fuelData) {
 		mFuelData = fuelData;
-		
-		
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		ArrayList<String> greens = new ArrayList<String>(12);
-		if (sharedPrefs != null) {
-			for (Entry<String, ?> kp : sharedPrefs.getAll().entrySet()) {
-				try {
-					boolean val = sharedPrefs.getBoolean(kp.getKey(), false);
-					if (val) {
-						greens.add(kp.getKey());
-					}
-				} catch (ClassCastException e) {
-					//pass
-				}
-			}
-		}
-		String[] renewables = new String[12];
-		renewables = greens.toArray(renewables);
-		Log.d("User defined prefs", renewables == null ? "" : Arrays.toString(renewables));
-		
-		double d = mFuelData.getCurrentPercent(renewables);
+		//This pulls our preferences, then extracts the keys we consider "green"
+		//And uses them to calculate the green %.
+
+		double d = mFuelData.getCurrentPercent();
 		
 		String percentFormat = mRes.getString(R.string.percentage_format);
 		String percent = String.format(Locale.US, percentFormat, d * 100);
@@ -558,10 +587,34 @@ public class MainActivity extends Activity {
 	 * @return The api abbreviation from this data.
 	 */
 	private String pullApiAbbrev(String url) {
+		Log.d("Pulling API Abbrev", url);
 		return url.substring(61, (url.indexOf('&') == -1 ) ? url.length() : url.indexOf('&'));
 	}
 
 	/* -------------------- UTILITY METHODS ----------------- */
+	
+	private String[] getRenewablePrefs() {
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		ArrayList<String> greens = new ArrayList<String>(17); //TODO magic number
+		if (sharedPrefs != null) {
+			for (Entry<String, ?> kp : sharedPrefs.getAll().entrySet()) {
+				try {
+					boolean val = sharedPrefs.getBoolean(kp.getKey(), false);
+					if (val) {
+						greens.add(kp.getKey());
+					}
+				} catch (ClassCastException e) {
+					//pass
+					//Error ignored because getBoolean fails for nonboolean prefs.
+					//Possibly fix with a separate prefs file for green data
+				}
+			}
+		}
+		String[] renewables = new String[17];
+		renewables = greens.toArray(renewables);
+		Log.d("User defined prefs", renewables == null ? "" : Arrays.toString(renewables));
+		return renewables;
+	}
 
 	/**
 	 * Utility function to determine whether the internet is connected or not
