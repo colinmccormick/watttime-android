@@ -24,6 +24,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -92,7 +93,8 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		mProgressBar = (ProgressBar) findViewById(R.id.main_progressbar);
-		mPlot = (XYPlot) findViewById(R.id.main_xyplot_WTF);
+		mPlot = (XYPlot) findViewById(R.id.main_xyplot_main); // For some reason calling this main_xyplot results 
+															  // in an exception. What!? 
 		mPercentage = (TextView) findViewById(R.id.main_percentage);
 		mRes = getResources();
 		
@@ -169,7 +171,7 @@ public class MainActivity extends Activity {
 				FuelDataList fuelData = (FuelDataList) savedInstanceState.getParcelable("data");
 				if (savedAb != null && fuelData != null) { //Check to see if we got decent data from the bundle
 					apiAbbrev = savedAb;
-					launchPercent(fuelData);
+					launchViews(fuelData);
 				} //otherwise try elsewhere.
 			} 
 			//Check to see if we can recreate from cached data
@@ -232,11 +234,10 @@ public class MainActivity extends Activity {
 				getPercentData();
 			}
 		} else if (!internetConnected()){
-			/*This means there's no network connection, so raise an error */
+			//This means there's no network connection, so raise an error
 			throwFatalNetworkError();
 			return;
 		}
-		launchGraph();
 	}
 
 	@Override
@@ -287,13 +288,29 @@ public class MainActivity extends Activity {
 
 	private boolean launchGraph() {
 		if (mPlot == null || mFuelData == null || mFuelData.size() == 0) {
+			Log.e("LaunchGraph", "You tried to launch a graph without data");
 			return false;
 		} else {
-			LineAndPointFormatter series1Format = new LineAndPointFormatter();
-			series1Format.setPointLabelFormatter(new PointLabelFormatter());
-			series1Format.configure(this,R.xml.line_point_formatter_with_plf1);
-			mPlot.addSeries(mFuelData.getLastDayPoints(), series1Format);
-			mPlot.setVisibility(View.VISIBLE);
+			Log.d("LaunchGraph", "Launching the graph");
+			class GraphGet extends AsyncTask<Context, Void, Boolean> {
+				@Override
+				protected Boolean doInBackground(Context... context) {
+					LineAndPointFormatter series1Format = new LineAndPointFormatter();
+					series1Format.setPointLabelFormatter(new PointLabelFormatter());
+					series1Format.configure(context[0], R.xml.line_point_formatter_with_plf1);
+					mPlot.addSeries(mFuelData.getLastDayPoints(), series1Format);
+					return true;
+				}
+				@Override
+				protected void onPostExecute(Boolean success) {
+					if (success) {
+						mPlot.setVisibility(View.VISIBLE);
+					} else {
+						throwFatalAppError();
+					}
+				}
+			}
+			new GraphGet().execute(this);
 			return true;
 		}
 	}
@@ -500,7 +517,7 @@ public class MainActivity extends Activity {
 			//We have to check if our data is actually there. (Weird edge case error)
 			if (data.size() > 0) {
 				Log.d("dppget", "data was size.");
-				launchPercent(data);
+				launchViews(data);
 			} else if (apiAbbrev == null || data.size() < 0) {
 				Log.d("dppget", "apiabbrev null");
 				Log.e("Dppget", "Something's fucky"); //FIXME
@@ -537,8 +554,9 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	private void launchPercent(FuelDataList fuelData) {
+	private void launchViews(FuelDataList fuelData) {
 		mFuelData = fuelData;
+		launchGraph();
 		//This pulls our preferences, then extracts the keys we consider "green"
 		//And uses them to calculate the green %.
 
@@ -636,6 +654,10 @@ public class MainActivity extends Activity {
 	
 	private void throwFatalNetworkError() {
 		Toast.makeText(this, R.string.connectivity_error, Toast.LENGTH_SHORT).show(); 
+	}
+	
+	private void throwFatalAppError() {
+		Toast.makeText(this, R.string.connectivity_error, Toast.LENGTH_SHORT).show();  //TODO
 	}
 
 }

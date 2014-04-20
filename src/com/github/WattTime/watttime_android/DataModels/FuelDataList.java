@@ -66,7 +66,8 @@ public class FuelDataList implements Parcelable {
 	}
 
 	public double getCurrentPercent(String[] prefs) {
-		if (prefs == null) {
+		if (prefs == null || prefs[0] == null || prefs[0].equals("null")) {
+			Log.e("FuelDataList", "Bad settings passed in");
 			return -1;
 		} else {
 			return dataPoints.get(0).getPercentGreen(prefs);
