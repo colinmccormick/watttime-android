@@ -354,6 +354,13 @@ public class MainActivity extends Activity {
 	/* -------------- NAVIGATION DRAWER METHODS ------------- */
 
 	private boolean launchSettingsFragment() {
+		//Check to see if there's already a settings fragment there.
+		SettingsFragment test = (SettingsFragment) getFragmentManager().findFragmentByTag("settingsTag");
+		if (test != null && test.isVisible()) {
+			Log.d("Settings frag", "Refused to open another settingsfragment");
+			return false;
+		}
+		
 		// Hide the progressbar/percentage indicators before launching the fragment.
 		if (mProgressBar != null && mProgressBar.getVisibility() == View.VISIBLE) {
 			mProgressBar.setVisibility(View.INVISIBLE);
@@ -385,36 +392,45 @@ public class MainActivity extends Activity {
 				}
 				super.onDestroy();
 			}
-		})
+		}, "settingsTag")
 		.addToBackStack(null)
 		.commit();
 		return true;
 	}
-
+	private void launchAboutFragment() {
+		//do
+	}
+	private void launchEmbeddedDevices() {
+		//do
+	}
 
 
 	/* Used for the nav drawer actions. */
 	private class DrawerItemClickListener implements ListView.OnItemClickListener {
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			mDrawerLayout.closeDrawer(mDrawerList);
+			Log.d("Clicked on pos", position + "");
 			switch (position) {
-			case 1:
+			case 0:
 				//HOME
 				Log.d("nav drawer", "home");
+				//nop
 				break;
-			case 2:
+			case 1:
 				//EMBEDDED DEVICES
 				Log.d("nav drawer", "embedded dev");
+				launchEmbeddedDevices();
 				break;
-			case 3:
+			case 2:
 				//SETTINGS
 				Log.d("nav drawer", "settings");
-				mDrawerLayout.closeDrawer(mDrawerList);
 				launchSettingsFragment();
 				break;
-			case 4:
+			case 3:
 				//ABOUT
 				Log.d("nav drawer", "about");
+				launchAboutFragment();
 				break;
 			}
 		}
@@ -673,7 +689,7 @@ public class MainActivity extends Activity {
 		switch (internetQual) {
 		case HIGH_QUALITY:
 			Log.d("IQ", "high");
-			pageSize = "144"; //TODO FIX to 5m and 288....
+			pageSize = "144"; //TODO FIX to 5m and 288.... API is too slow (20seconds as of now)
 			freq = "10m";
 			break;
 		case MED_QUALITY:
@@ -703,7 +719,7 @@ public class MainActivity extends Activity {
 	
 	private String[] getRenewablePrefs() {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		ArrayList<String> greens = new ArrayList<String>(17); //TODO magic number
+		ArrayList<String> greens = new ArrayList<String>(17);
 		if (sharedPrefs != null) {
 			for (Entry<String, ?> kp : sharedPrefs.getAll().entrySet()) {
 				try {
@@ -723,7 +739,7 @@ public class MainActivity extends Activity {
 		renewables = greens.toArray(renewables);
 		Log.d("User defined prefs", renewables == null ? "" : Arrays.toString(renewables));
 		if (renewables[0] == null || renewables[0].equals("null")) {
-			//So either this user is hitler or we're missing our prefs...
+			//So either this user is literally Hitler or we're missing our prefs... likely the latter
 			//This technique is a patch, there is an alt way to deal to figure out. TODO
 			renewables = mRes.getStringArray(R.array.default_renewable_keys);
 			Log.w("RenewablePrefs", "Using the string array for prefs...");
@@ -778,7 +794,7 @@ public class MainActivity extends Activity {
 	}
 	
 	private void throwFatalAppError() {
-		Toast.makeText(this, R.string.connectivity_error, Toast.LENGTH_SHORT).show();  //TODO
+		Toast.makeText(this, R.string.app_error, Toast.LENGTH_SHORT).show();
 	}
 
 }

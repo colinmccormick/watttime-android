@@ -8,6 +8,8 @@
     
     <string name="connectivity_error">Could not connect to network</string>
     <string name="server_error">The server encountered an error, please try again.</string>
+     <string name="app_error">WattTime encountered an error, please try again.</string>
+    
     <string name="generation_types_header">Are these clean?</string>
     
     <string name="drawer_open">ABC123</string>

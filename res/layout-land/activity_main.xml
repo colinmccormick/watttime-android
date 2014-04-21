@@ -1,86 +1,72 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_root"
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".MainActivity" >
+    android:layout_height="fill_parent" >
 
-    <ProgressBar
-        android:id="@+id/main_progressbar"
-        style="@android:style/Widget.ProgressBar.Inverse"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:indeterminate="true" />
-    
-    <TextView
-        android:id="@+id/main_percentage"
-        android:gravity="right"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:visibility="invisible" />
-
-    <com.androidplot.xy.XYPlot
-        android:id="@+id/main_xyplot_main"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="left"
-        android:layout_toLeftOf="@id/main_percentage"
-        android:visibility="invisible"
-        androidPlot.domainLabel="XAXIS"
-        androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
-        
-        androidPlot.graphWidget.gridLinePaint.color="#000000"
-        androidPlot.graphWidget.marginBottom="25dp"
-        androidPlot.graphWidget.marginLeft="15dp"
-        androidPlot.graphWidget.marginRight="10dp"
-        androidPlot.graphWidget.marginTop="20dp"
-        androidPlot.graphWidget.rangeLabelPaint.textSize="@dimen/range_tick_label_font_size"
-        androidPlot.graphWidget.rangeOriginLabelPaint.textSize="@dimen/range_tick_label_font_size"
-        androidPlot.legendWidget.heightMetric.value="25dp"
-        androidPlot.legendWidget.iconSizeMetrics.heightMetric.value="15dp"
-        androidPlot.legendWidget.iconSizeMetrics.widthMetric.value="15dp"
-        androidPlot.legendWidget.positionMetrics.anchor="right_bottom"
-        androidPlot.legendWidget.textPaint.textSize="@dimen/legend_text_font_size"
-        androidPlot.rangeLabel="YAXIS"
-        androidPlot.rangeLabelWidget.labelPaint.textSize="@dimen/range_label_font_size"
-        androidPlot.title="TITLE"
-        androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size" />
-    
-
-    <!-- The resources for the nav drawer -->
-
-    <android.support.v4.widget.DrawerLayout
+    <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/drawer_layout"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/main_root"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        tools:context=".MainActivity" >
 
-        <!-- The main content view -->
+        <ProgressBar
+            android:id="@+id/main_progressbar"
+            style="@android:style/Widget.ProgressBar.Inverse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:indeterminate="true" />
 
-        <FrameLayout
-            android:id="@+id/content_frame"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-        <!-- The navigation drawer  ? -->
+        <TextView
+            android:id="@+id/main_percentage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:gravity="right"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:visibility="invisible" />
 
-        <ListView
-            android:id="@+id/left_drawer"
-            android:layout_width="240dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="start"
-            android:background="#111"
-            android:choiceMode="singleChoice"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="0dp" />
-    </android.support.v4.widget.DrawerLayout>
+        <com.androidplot.xy.XYPlot
+            android:id="@+id/main_xyplot_main"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@id/main_percentage"
+            androidPlot.domainLabel="XAXIS"
+            androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
+            androidPlot.graphWidget.gridLinePaint.color="#000000"
+            androidPlot.graphWidget.marginBottom="25dp"
+            androidPlot.graphWidget.marginLeft="15dp"
+            androidPlot.graphWidget.marginRight="10dp"
+            androidPlot.graphWidget.marginTop="20dp"
+            androidPlot.legendWidget.heightMetric.value="25dp"
+            androidPlot.legendWidget.iconSizeMetrics.heightMetric.value="15dp"
+            androidPlot.legendWidget.iconSizeMetrics.widthMetric.value="15dp"
+            androidPlot.legendWidget.positionMetrics.anchor="right_bottom"
+            androidPlot.legendWidget.textPaint.textSize="@dimen/legend_text_font_size"
+            androidPlot.rangeLabel="YAXIS"
+            androidPlot.title="TITLE"
+            androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size"
+            android:gravity="left"
+            android:visibility="invisible" />
+    </RelativeLayout>
+    <!-- The navigation drawer -->
 
-</RelativeLayout>
+    <ListView
+        android:id="@+id/left_drawer"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#111"
+        android:choiceMode="singleChoice"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp" />
+
+</android.support.v4.widget.DrawerLayout>
