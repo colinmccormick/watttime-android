@@ -4,8 +4,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.FieldPosition;
+import java.text.Format;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -30,6 +35,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -42,8 +48,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidplot.xy.BoundaryMode;
 import com.androidplot.xy.LineAndPointFormatter;
-import com.androidplot.xy.PointLabelFormatter;
 import com.androidplot.xy.XYPlot;
 import com.github.WattTime.watttime_android.R;
 import com.github.WattTime.watttime_android.ASyncTasks.APIGet;
@@ -66,6 +72,11 @@ public class MainActivity extends Activity {
 
 	/*Constant filename for caching data */
 	private final String TEMPFILENAME = "datapoints";
+	
+	/*Constants to describe internet quality */
+	private final int HIGH_QUALITY = 0;
+	private final int MED_QUALITY = 1;
+	private final int LOW_QUALITY = 2;
 
 	/*Resources file so we don't have to load it over and over */
 	private Resources mRes; 
@@ -295,8 +306,33 @@ public class MainActivity extends Activity {
 			class GraphGet extends AsyncTask<Context, Void, Boolean> {
 				@Override
 				protected Boolean doInBackground(Context... context) {
+					//We have to pull more data so we have at least the last day of data.
+
+					
+					//mPlot.setDomainBoundaries(0, 1440, BoundaryMode.FIXED); //TODO xml?
+					mPlot.setRangeBoundaries(0,100, BoundaryMode.FIXED); //TODO.... 
+					mPlot.setRangeStepValue(10);
+					
+					mPlot.setDomainValueFormat(new Format() {
+						private static final long serialVersionUID = 1L; //FIXME ?
+						
+			            private SimpleDateFormat dateFormat = new SimpleDateFormat("hha", Locale.US); //TODO internationalize
+			 
+			            @Override
+			            public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
+			                long timestamp = ((Number) obj).longValue();
+			                Date date = new Date(timestamp);
+			                return dateFormat.format(date, toAppendTo, pos);
+			            }
+
+			            @Override
+			            public Object parseObject(String source, ParsePosition pos) {
+			                return null;
+			            }
+			        });
+					
 					LineAndPointFormatter series1Format = new LineAndPointFormatter();
-					series1Format.setPointLabelFormatter(new PointLabelFormatter());
+					series1Format.setPointLabelFormatter(null);
 					series1Format.configure(context[0], R.xml.line_point_formatter_with_plf1);
 					mPlot.addSeries(mFuelData.getLastDayPoints(), series1Format);
 					return true;
@@ -325,12 +361,14 @@ public class MainActivity extends Activity {
 		} else if (mPercentage != null && mPercentage.getVisibility() == View.VISIBLE) {
 			mPercentage.setVisibility(View.INVISIBLE);
 			Log.d("SettingsFragment", "Changing visiblity of percentage to invisible");
-		} else if (mPlot != null && mPlot.getVisibility() == View.VISIBLE) {
+		} 
+		if (mPlot != null && mPlot.getVisibility() == View.VISIBLE) {
+			Log.d("SettingsFragment", "Changing visiblity of graph to invisible");
 			mPlot.setVisibility(View.INVISIBLE);
 		}
 		getFragmentManager()
 		.beginTransaction()
-		.replace(android.R.id.content, new SettingsFragment() {
+		.replace(R.id.main_root, new SettingsFragment() {
 			@Override 
 			public void onDestroy() {
 				if (mProgressBar != null && mProgressBar.getVisibility() == View.INVISIBLE) {
@@ -339,8 +377,11 @@ public class MainActivity extends Activity {
 				} else if (mPercentage != null && mPercentage.getVisibility() == View.INVISIBLE) {
 					Log.d("SettingsFragment", "Changing visiblity of percentage back to visible");
 					mPercentage.setVisibility(View.VISIBLE);
-				} else if (mPlot != null && mPlot.getVisibility() == View.INVISIBLE) {
+				} 
+				if (mPlot != null && mPlot.getVisibility() == View.INVISIBLE) {
+					Log.d("SettingsFragment", "Changing visiblity of graph back to visible");
 					mPlot.setVisibility(View.VISIBLE);
+					
 				}
 				super.onDestroy();
 			}
@@ -360,17 +401,21 @@ public class MainActivity extends Activity {
 			case 1:
 				//HOME
 				Log.d("nav drawer", "home");
+				break;
 			case 2:
 				//EMBEDDED DEVICES
 				Log.d("nav drawer", "embedded dev");
+				break;
 			case 3:
 				//SETTINGS
 				Log.d("nav drawer", "settings");
 				mDrawerLayout.closeDrawer(mDrawerList);
 				launchSettingsFragment();
+				break;
 			case 4:
 				//ABOUT
 				Log.d("nav drawer", "about");
+				break;
 			}
 		}
 	}
@@ -486,24 +531,31 @@ public class MainActivity extends Activity {
 			protected void onPostExecute(JSONArray jSON) {
 				doPostPercentGet(jSON, true);
 			}
-		}.execute(makeDataUrl(apiAbbrev));
+		}.execute(makeFullDataUrl(apiAbbrev, internetQuality()));
 	}
 
 	private boolean refreshData() {
 		if (apiAbbrev == null) {
-			return false;
+			return false; //TODO
 		} else {
+			String url;
+			if (mFuelData != null) {
+				url = makeShortDataUrl(apiAbbrev, internetQuality(), mFuelData.getTimeUpdated());
+			} else {
+				url = makeFullDataUrl(apiAbbrev, internetQuality());
+			}
 			new APIGet() {
 				@Override
 				protected void onPreExecute() {
 					mPercentage.setVisibility(View.INVISIBLE);
+					mPlot.setVisibility(View.INVISIBLE);
 					mProgressBar.setVisibility(View.VISIBLE);
 				}
 				@Override
 				protected void onPostExecute(JSONArray jSON) {
-					doPostPercentGet(jSON, true);
+					doPostPercentGet(jSON, true); //TODO
 				}
-			}.execute(makeDataUrl(apiAbbrev));
+			}.execute(url);
 		}
 		return true;
 	}
@@ -574,7 +626,7 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Utility function to take in a location object and return the properly formatted APIURL
-	 * @see http://watttime-grid-api.herokuapp.com/api/v1/docs/#!/balancing_authorities/Balancing_Authority_get_0
+	 * @see http://api.watttime.org/api/v1/docs/#!/balancing_authorities/Balancing_Authority_get_0
 	 * API takes in location in LONGITUDE, LATITUDE.
 	 */
 	private String makeAbUrl(Location loc) {
@@ -593,11 +645,49 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Utility function to make the API URL to get the data for our ISO
-	 * @see http://watttime-grid-api.herokuapp.com/api/v1/docs/#!/datapoints/Data_Point_List_get_0
+	 * @see http://api.watttime.org/api/v1/docs/#!/datapoints/Data_Point_List_get_0
+	 * Format args are BA, Start at, end at, page size, freq (5m 10m 1h)
 	 */
-	private String makeDataUrl(String abbrev) {
+	private String makeFullDataUrl(String balancingAuth, int internetQual) {
+		Time startTime = new Time();
+		startTime.setToNow();
+		startTime.set(0, 0, 0, startTime.monthDay, startTime.month, startTime.year);
+		startTime.switchTimezone(Time.getCurrentTimezone());
+		return makeShortDataUrl(balancingAuth, internetQual, startTime);
+	}
+	
+	private String makeShortDataUrl(String balancingAuth, int internetQual, Time lastUpdate) {
 		String dataStem = mRes.getString(R.string.data_api_stem);
-		return String.format(Locale.US, dataStem, abbrev);
+		Time startTime = lastUpdate;
+		Time endTime = new Time(startTime);
+		endTime.set(59, 59, 23, endTime.monthDay, endTime.month, endTime.year);
+		
+		endTime.switchTimezone(Time.getCurrentTimezone());
+		startTime.switchTimezone(Time.getCurrentTimezone());
+		
+		String start = startTime.format3339(false);
+		String end = endTime.format3339(false);
+		String pageSize;
+		String freq;
+		Log.d("IQ NUM", Integer.toString(internetQual));
+		switch (internetQual) {
+		case HIGH_QUALITY:
+			Log.d("IQ", "high");
+			pageSize = "144"; //TODO FIX to 5m and 288....
+			freq = "10m";
+			break;
+		case MED_QUALITY:
+			Log.d("IQ", "med");
+			pageSize = "144";
+			freq = "10m";
+			break;
+		default:
+			Log.d("IQ", "low");
+			pageSize = "24";
+			freq = "1h";
+			break;
+		}
+		return String.format(Locale.US, dataStem, balancingAuth, start, end, pageSize, freq);
 	}
 	/**
 	 * Utility method to get the apiabbrev out of a data API url.
@@ -606,7 +696,7 @@ public class MainActivity extends Activity {
 	 */
 	private String pullApiAbbrev(String url) {
 		Log.d("Pulling API Abbrev", url);
-		return url.substring(61, (url.indexOf('&') == -1 ) ? url.length() : url.indexOf('&'));
+		return url.substring(61, (url.indexOf('&') == -1 ) ? url.length() : url.indexOf('&')); //TODO remove magic
 	}
 
 	/* -------------------- UTILITY METHODS ----------------- */
@@ -625,12 +715,19 @@ public class MainActivity extends Activity {
 					//pass
 					//Error ignored because getBoolean fails for nonboolean prefs.
 					//Possibly fix with a separate prefs file for green data
+					Log.i("Get Renew Prefs", "ClassCastException! Pass...");
 				}
 			}
 		}
 		String[] renewables = new String[17];
 		renewables = greens.toArray(renewables);
 		Log.d("User defined prefs", renewables == null ? "" : Arrays.toString(renewables));
+		if (renewables[0] == null || renewables[0].equals("null")) {
+			//So either this user is hitler or we're missing our prefs...
+			//This technique is a patch, there is an alt way to deal to figure out. TODO
+			renewables = mRes.getStringArray(R.array.default_renewable_keys);
+			Log.w("RenewablePrefs", "Using the string array for prefs...");
+		}
 		return renewables;
 	}
 
@@ -646,6 +743,30 @@ public class MainActivity extends Activity {
 			return false;
 		}
 		return true;
+	}
+	
+	private int internetQuality() {
+		ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+		switch (networkInfo.getType()) {
+		case ConnectivityManager.TYPE_WIFI:
+			Log.d("Internet quality", "High");
+			return HIGH_QUALITY;
+		case ConnectivityManager.TYPE_BLUETOOTH:
+			Log.d("Internet quality", "High");
+			return HIGH_QUALITY;
+		case ConnectivityManager.TYPE_MOBILE:
+			if (networkInfo.isRoaming()) {
+				Log.d("Internet quality", "Low");
+				return LOW_QUALITY;
+			} else {
+				Log.d("Internet quality", "Med");
+				return MED_QUALITY;
+			}
+		default:
+			Log.d("Internet quality", "Low");
+			return LOW_QUALITY;
+		}
 	}
 	
 	private void throwFatalServerError() {

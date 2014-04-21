@@ -37,8 +37,7 @@
         android:visibility="invisible"
         androidPlot.domainLabel="XAXIS"
         androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
-        androidPlot.graphWidget.domainLabelPaint.textSize="@dimen/domain_tick_label_font_size"
-        androidPlot.graphWidget.domainOriginLabelPaint.textSize="@dimen/domain_tick_label_font_size"
+        
         androidPlot.graphWidget.gridLinePaint.color="#000000"
         androidPlot.graphWidget.marginBottom="25dp"
         androidPlot.graphWidget.marginLeft="15dp"

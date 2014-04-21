@@ -14,8 +14,8 @@
     <string name="drawer_close">DEF456</string>
     <string name="reset_defaults">Reset to defaults</string>
     
-    <string name="data_api_stem" formatted="false">http://watttime-grid-api.herokuapp.com/api/v1/datapoints/?ba=%s&amp;format=json</string>
-    <string name="abbr_api_stem" formatted="false">http://watttime-grid-api.herokuapp.com/api/v1/balancing_authorities/?format=json&amp;loc=POINT+%%28%+09.4f%%20%+09.4f%%29</string>
+    <string name="data_api_stem" formatted="false">http://api.watttime.org/api/v1/datapoints/?format=json&amp;?ba=%s&amp;start_at=%s&amp;end_at=%s&amp;page_size=%s&amp;freq=%s</string>
+    <string name="abbr_api_stem" formatted="false">http://api.watttime.org/api/v1/balancing_authorities/?format=json&amp;loc=POINT+%%28%+09.4f%%20%+09.4f%%29</string>
 
     <string name="percentage_format" formatted="false">%2.1f%%</string>
     
@@ -24,6 +24,22 @@
         <item>Embedded Devices</item>
         <item>Settings</item>
         <item>About</item>
+    </string-array>
+    
+    <string-array name="default_renewable_keys">
+        <item>biogas</item>
+        <item>biomass</item>
+        <item>geo</item>
+        <item>hydro</item>
+        <item>nonwind</item>
+        <item>nuclear</item>
+        <item>refuse</item>
+        <item>renewable</item>
+        <item>solar</item>    
+        <item>solarpv</item> 
+        <item>solarth</item> 
+        <item>thermal</item>
+        <item>wind</item>  
     </string-array>
 
 </resources>

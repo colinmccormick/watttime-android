@@ -124,11 +124,12 @@ public class FuelDataList implements Parcelable {
 			return;
 		} else {
 			Time newTime = fDatPt.getTimeCreated();
+			newTime.switchTimezone(Time.getCurrentTimezone());
 			if (newTime.yearDay == (lastUpdated != null ? lastUpdated.yearDay : newTime.yearDay)) { //Must handle first case... TODO
 				//If the datapoint we're adding was today, go ahead and put it in the XYseries
-				int minOfDay = newTime.minute + newTime.hour * 60;
-				double percent = fDatPt.getPercentGreen(mRenewablePreferences);
-				((SimpleXYSeries) mXYSeries).addLast(minOfDay,percent);
+				long millis = newTime.toMillis(false);
+				double percent = fDatPt.getPercentGreen(mRenewablePreferences) * 100;
+				((SimpleXYSeries) mXYSeries).addLast(millis, percent);
 			}
 		}
 	}
