@@ -709,10 +709,11 @@ public class MainActivity extends Activity {
 	 * Utility method to get the apiabbrev out of a data API url.
 	 * @param url A properly formed data url, like the ones returned by makeDataUrl
 	 * @return The api abbreviation from this data.
+	 * @suppress magic
 	 */
 	private String pullApiAbbrev(String url) {
 		Log.d("Pulling API Abbrev", url);
-		return url.substring(61, (url.indexOf('&') == -1 ) ? url.length() : url.indexOf('&')); //TODO remove magic
+		return url.substring(61, (url.indexOf('&') == -1 ) ? url.length() : url.indexOf('&'));
 	}
 
 	/* -------------------- UTILITY METHODS ----------------- */
