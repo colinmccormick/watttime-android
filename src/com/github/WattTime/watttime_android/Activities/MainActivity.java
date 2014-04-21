@@ -65,6 +65,9 @@ public class MainActivity extends Activity {
 	/* Internal datamodel holding the most recent fuel data. */
 	private FuelDataList mFuelData;
 
+	/* String array containing our preferences */
+	private String[] mRenewPrefs;
+	
 	/* View objects that need to be edited by Java.*/
 	private ProgressBar mProgressBar; //TODO Change to windmill
 	private TextView mPercentage;
@@ -163,7 +166,12 @@ public class MainActivity extends Activity {
 		Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
 		
 		//Check for preference changes
-		//TODO
+		boolean prefRefreshed = false;
+		if (preferencesChanged()) {
+			refreshData(true);
+			prefRefreshed = true;
+		}
+		
 		
 		// Make the file before the if suite
 		File file = new File(this.getCacheDir(), TEMPFILENAME);
@@ -194,7 +202,8 @@ public class MainActivity extends Activity {
 				} //otherwise try elsewhere.
 			} 
 		//Check to see if we can recreate from cached data
-		} else if (file != null && file.length() > 0) {
+		//PrefRefreshed will be true if we just refreshed the data, so don't do it again
+		} else if (file != null && file.length() > 0 && !prefRefreshed) {
 			Log.d("Lifecycle", "The saved file exists, checking it.");
 			JSONArray jSON = null;
 			try {
@@ -236,7 +245,7 @@ public class MainActivity extends Activity {
 				Log.wtf("Files", "Should never get here because it checks if the file's length is nonzero");
 			}
 		}
-		//So somewhere we didn't pick up the correct data
+		//So somewhere we didn't pick up the correct data or it needs to be re downloaded
 		if ((apiAbbrev == null || mFuelData == null) && internetConnected()) {
 			//Check to see if we need to pull all of it again
 			if (apiAbbrev == null) {
@@ -493,7 +502,7 @@ public class MainActivity extends Activity {
 		// Now handle code for clicking on settings button(s)
 		switch (item.getItemId()) {
 		case R.id.action_refresh:
-			return refreshData();
+			return refreshData(false);
 		default:
 			return super.onOptionsItemSelected(item);
 		}
@@ -530,14 +539,14 @@ public class MainActivity extends Activity {
 	}
 
 	private FuelDataList parseDataJSON(JSONArray jSON) {
-		
 		if (jSON == null) {
 			return null;
 		}
+		mRenewPrefs = getRenewablePrefs();
 		Log.d("Attempting to parse JSON", jSON.toString());
-		Log.d("Renewableprefs", Arrays.toString(getRenewablePrefs()));
-		try {
-			return new FuelDataList(jSON.getJSONObject(0), getRenewablePrefs());
+		Log.d("Renewableprefs", Arrays.toString(mRenewPrefs));
+		try { //TODO check for length of json and add to existing list if it's short.
+			return new FuelDataList(jSON.getJSONObject(0), mRenewPrefs);
 		} catch (JSONException e) {
 			Log.e("MainActivity", "Couldn't parse something somewhere.");
 			e.printStackTrace();
@@ -560,12 +569,13 @@ public class MainActivity extends Activity {
 		}.execute(makeFullDataUrl(apiAbbrev, internetQuality()));
 	}
 
-	private boolean refreshData() {
+	private boolean refreshData(boolean force) {
+		Log.i("MA", "Refreshing my data");
 		if (apiAbbrev == null) {
 			return false; //TODO
 		} else {
 			String url;
-			if (mFuelData != null) {
+			if (force || mFuelData != null) {
 				url = makeShortDataUrl(apiAbbrev, internetQuality(), mFuelData.getTimeUpdated());
 			} else {
 				url = makeFullDataUrl(apiAbbrev, internetQuality());
@@ -734,13 +744,12 @@ public class MainActivity extends Activity {
 		if (sharedPrefs != null) {
 			for (Entry<String, ?> kp : sharedPrefs.getAll().entrySet()) {
 				try {
-					boolean val = sharedPrefs.getBoolean(kp.getKey(), false);
-					if (val) {
+					if (Boolean.class.cast(kp.getValue())) {
 						greens.add(kp.getKey());
 					}
 				} catch (ClassCastException e) {
 					//pass
-					//Error ignored because getBoolean fails for nonboolean prefs.
+					//Error ignored because of non boolean prefs, which we don't care about..
 					//Possibly fix with a separate prefs file for green data
 					Log.i("Get Renew Prefs", "ClassCastException! Pass...");
 				}
@@ -748,8 +757,16 @@ public class MainActivity extends Activity {
 		}
 		String[] renewables = new String[17];
 		renewables = greens.toArray(renewables);
-		Log.d("User defined prefs", renewables == null ? "" : Arrays.toString(renewables));
 		return renewables;
+	}
+	
+	private boolean preferencesChanged() {
+		if (mRenewPrefs == null) {
+			Log.d("prefs", "Preferences did not change.");
+			return false;
+		} else {
+			return !Arrays.deepEquals(mRenewPrefs, getRenewablePrefs());
+		}
 	}
 
 	/**
