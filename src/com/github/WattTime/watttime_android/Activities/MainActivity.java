@@ -21,6 +21,7 @@ import org.json.JSONObject;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -80,6 +81,7 @@ public class MainActivity extends Activity {
 
 	/*Resources file so we don't have to load it over and over */
 	private Resources mRes; 
+	private FragmentManager mFragMan;
 
 	/* Resources for the navigation drawer */
 	private String[] mNavigationItems;
@@ -108,7 +110,10 @@ public class MainActivity extends Activity {
 															  // in an exception. What!? 
 		mPercentage = (TextView) findViewById(R.id.main_percentage);
 		mRes = getResources();
+		mFragMan = getFragmentManager();
 		
+		//Set default preferences on first run, solves bug (?)
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 		
 		// ----- Set up the Nav drawer ------- //
 		mNavigationItems = mRes.getStringArray(R.array.navigation_array);
@@ -156,7 +161,10 @@ public class MainActivity extends Activity {
 		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		String locationProvider = LocationManager.NETWORK_PROVIDER;
 		Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
-
+		
+		//Check for preference changes
+		//TODO
+		
 		// Make the file before the if suite
 		File file = new File(this.getCacheDir(), TEMPFILENAME);
 		Log.d("Fileservice", "making a tempfile");
@@ -185,7 +193,7 @@ public class MainActivity extends Activity {
 					launchViews(fuelData);
 				} //otherwise try elsewhere.
 			} 
-			//Check to see if we can recreate from cached data
+		//Check to see if we can recreate from cached data
 		} else if (file != null && file.length() > 0) {
 			Log.d("Lifecycle", "The saved file exists, checking it.");
 			JSONArray jSON = null;
@@ -373,7 +381,7 @@ public class MainActivity extends Activity {
 			Log.d("SettingsFragment", "Changing visiblity of graph to invisible");
 			mPlot.setVisibility(View.INVISIBLE);
 		}
-		getFragmentManager()
+		mFragMan
 		.beginTransaction()
 		.replace(R.id.main_root, new SettingsFragment() {
 			@Override 
@@ -415,7 +423,12 @@ public class MainActivity extends Activity {
 			case 0:
 				//HOME
 				Log.d("nav drawer", "home");
-				//nop
+				//If settingsfrag is present and visible, close it.
+				SettingsFragment settingsFrag = (SettingsFragment) mFragMan.findFragmentByTag("settingsTag");
+				if (settingsFrag != null && settingsFrag.isVisible()) {
+					Log.d("Settings frag", "Closing settingsfragment");
+					mFragMan.popBackStackImmediate();
+				}
 				break;
 			case 1:
 				//EMBEDDED DEVICES
@@ -443,9 +456,6 @@ public class MainActivity extends Activity {
 		mTitle = title;
 		getActionBar().setTitle(mTitle);
 	}
-
-
-
 
 	/* ---------------- OPTIONS MENU METHODS ------------ */
 
@@ -739,12 +749,6 @@ public class MainActivity extends Activity {
 		String[] renewables = new String[17];
 		renewables = greens.toArray(renewables);
 		Log.d("User defined prefs", renewables == null ? "" : Arrays.toString(renewables));
-		if (renewables[0] == null || renewables[0].equals("null")) {
-			//So either this user is literally Hitler or we're missing our prefs... likely the latter
-			//This technique is a patch, there is an alt way to deal to figure out. TODO
-			renewables = mRes.getStringArray(R.array.default_renewable_keys);
-			Log.w("RenewablePrefs", "Using the string array for prefs...");
-		}
 		return renewables;
 	}
 
