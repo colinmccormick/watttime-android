@@ -14,9 +14,13 @@
         <TextView
             android:id="@+id/widget_percentage"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ImageView
+            android:id="@+id/widget_stoplight"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="%XX" >
-        </TextView>
+            android:drawable="@drawable/ic_action_settings" />
     </RelativeLayout>
 
 </FrameLayout>

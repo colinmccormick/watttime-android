@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.text.Format;
+import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -323,7 +324,8 @@ public class MainActivity extends Activity {
 					mPlot.setRangeBoundaries(0,1, BoundaryMode.FIXED); //TODO.... 
 					//mPlot.setRangeStepValue((int) 10);
 					//mPlot.setRangeBottomMin(0);
-					mPlot.setRangeValueFormat(new DecimalFormat("%"));
+					NumberFormat rangeFormat = NumberFormat.getPercentInstance();
+					mPlot.setRangeValueFormat(rangeFormat);
 
 					mPlot.setDomainValueFormat(new Format() {
 						private static final long serialVersionUID = 1L; //FIXME ?
