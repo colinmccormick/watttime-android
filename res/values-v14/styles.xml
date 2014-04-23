@@ -5,8 +5,30 @@
         AppBaseTheme from BOTH res/values/styles.xml and
         res/values-v11/styles.xml on API 14+ devices.
     -->
-    <style name="AppBaseTheme" parent="android:Theme.Holo.Light.DarkActionBar">
+    <style 
+        name="WattTimeTheme" parent="android:Theme.Holo.Light.DarkActionBar" >
         <!-- API 14 theme customizations can go here. -->
+        <item name="android:actionBarStyle">@style/WattTimeBar</item>
+        <item name="android:background">#002C3C</item>
+        <item name="android:textAppearanceLarge">@style/LargeTextAppearance</item>
+        <item name="android:textColorSecondary">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+
     </style>
+    
+    <style name="WattTimeBar" parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">#002C3C</item>
+        <item name="android:titleTextStyle">@style/WattTimeActionBarTitleText</item>
+    </style>
+    
+        <!-- ActionBar title text -->
+    <style name="WattTimeActionBarTitleText" parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title">
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+    
+  	<style name="LargeTextAppearance" parent="@android:style/TextAppearance.Large">
+    	<item name="android:textColor">#ff0000</item>
+	</style>
+    
 
 </resources>

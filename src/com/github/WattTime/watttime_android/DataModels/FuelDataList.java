@@ -23,12 +23,10 @@ public class FuelDataList implements Parcelable {
 	private String nextURLtoLoad;
 	private Time lastUpdated;
 	private XYSeries mXYSeries;
-	private String[] mRenewablePreferences;
 
 	public FuelDataList(JSONObject jSON, String[] renewables) throws JSONException {
 		dataPoints = new ArrayList<FuelDataPoint>(12);
-		mXYSeries = new SimpleXYSeries("TODOEXTERNME"); //TODO
-		mRenewablePreferences = renewables;
+		mXYSeries = new SimpleXYSeries("Live Data"); //TODO
 		if (jSON != null && jSON.length() != 0) {
 			if (jSON.has("next")) {
 				nextURLtoLoad = jSON.getString("next");
@@ -45,7 +43,7 @@ public class FuelDataList implements Parcelable {
 							fDatPt.addPoint(pt.getString("fuel"), pt.getDouble("gen_MW"));
 						}
 						dataPoints.add(dataPoints.size(), fDatPt);
-						addToXYList(fDatPt);
+						addToXYList(fDatPt, renewables);
 					}
 				}
 			}
@@ -73,10 +71,6 @@ public class FuelDataList implements Parcelable {
 			return dataPoints.get(0).getPercentGreen(prefs);
 		}
 	}
-	
-	public double getCurrentPercent() {
-		return getCurrentPercent(mRenewablePreferences);
-	}
 
 	public XYSeries getLastDayPoints() {
 		//TODO fix weird behavior at midnight!
@@ -88,7 +82,7 @@ public class FuelDataList implements Parcelable {
 	 * @param jSON The JSON returned by a call to the server.
 	 * Will not add any duplicate or old data to the list, that it already doesn't have.
 	 */
-	public void addPoint(JSONObject jSON) throws JSONException {
+	public void addPoint(JSONObject jSON, String[] prefs) throws JSONException {
 		if (jSON != null && jSON.length() != 0) {
 			if (jSON.has("next")) {
 				nextURLtoLoad = jSON.getString("next");
@@ -109,7 +103,7 @@ public class FuelDataList implements Parcelable {
 								fDatPt.addPoint(pt.getString("fuel"), pt.getDouble("gen_MW"));
 							}
 							dataPoints.add(addcount, fDatPt);
-							addToXYList(fDatPt);
+							addToXYList(fDatPt, prefs);
 							addcount += 1;
 						}
 					}
@@ -118,8 +112,13 @@ public class FuelDataList implements Parcelable {
 		}
 		lastUpdated = dataPoints.get(0).getTimeCreated();
 	}
+	public void addPoints(JSONArray jSON, String[] prefs) throws JSONException {
+		if (jSON != null && jSON.length() > 0) {
+			addPoint(jSON.getJSONObject(0), prefs);
+		}
+	}
 
-	private void addToXYList(FuelDataPoint fDatPt) {
+	private void addToXYList(FuelDataPoint fDatPt, String[] prefs) {
 		if (fDatPt == null) {
 			return;
 		} else {
@@ -128,13 +127,10 @@ public class FuelDataList implements Parcelable {
 			if (newTime.yearDay == (lastUpdated != null ? lastUpdated.yearDay : newTime.yearDay)) { //Must handle first case... TODO
 				//If the datapoint we're adding was today, go ahead and put it in the XYseries
 				long millis = newTime.toMillis(false);
-				double percent = fDatPt.getPercentGreen(mRenewablePreferences) * 100;
+				double percent = fDatPt.getPercentGreen(prefs);
 				((SimpleXYSeries) mXYSeries).addLast(millis, percent);
 			}
 		}
-	}
-	public void changePrefs(String[] prefs) {
-		mRenewablePreferences = prefs;
 	}
 
 	/* ------------------------ PARCELABLE METHODS ------------------- */
@@ -144,7 +140,6 @@ public class FuelDataList implements Parcelable {
 			dataPoints.add(point);
 		}
 		nextURLtoLoad = in.readString();
-		in.readStringArray(mRenewablePreferences);
 	}
 
 	/* 
@@ -163,7 +158,6 @@ public class FuelDataList implements Parcelable {
 		FuelDataPoint[] dp = new FuelDataPoint[dataPoints.size()];
 		dest.writeParcelableArray(dataPoints.toArray(dp), 0);
 		dest.writeString(nextURLtoLoad);
-		dest.writeStringArray(mRenewablePreferences);
 	}
 	
 	public static final Parcelable.Creator<FuelDataList> CREATOR

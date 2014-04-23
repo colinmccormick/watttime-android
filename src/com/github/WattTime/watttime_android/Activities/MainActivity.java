@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
@@ -172,7 +173,6 @@ public class MainActivity extends Activity {
 			prefRefreshed = true;
 		}
 		
-		
 		// Make the file before the if suite
 		File file = new File(this.getCacheDir(), TEMPFILENAME);
 		Log.d("Fileservice", "making a tempfile");
@@ -198,7 +198,8 @@ public class MainActivity extends Activity {
 				FuelDataList fuelData = (FuelDataList) savedInstanceState.getParcelable("data");
 				if (savedAb != null && fuelData != null) { //Check to see if we got decent data from the bundle
 					apiAbbrev = savedAb;
-					launchViews(fuelData);
+					mFuelData = fuelData;
+					launchViews();
 				} //otherwise try elsewhere.
 			} 
 		//Check to see if we can recreate from cached data
@@ -233,7 +234,7 @@ public class MainActivity extends Activity {
 						apiAbbrev = pullApiAbbrev(url);
 						if (TIME_DELTA < MAX_DATA_AGE) {
 							Log.d("Lifecycle", "File was good to pull old data from");
-							doPostPercentGet(jSON, false);
+							doPostPercentGet(jSON, false, true);
 						}
 					}
 				}
@@ -249,14 +250,7 @@ public class MainActivity extends Activity {
 		if ((apiAbbrev == null || mFuelData == null) && internetConnected()) {
 			//Check to see if we need to pull all of it again
 			if (apiAbbrev == null) {
-				Log.d("MainActivity", "Pulling the ApiAbbrev from the server");
-				new APIGet() {
-					@Override
-					protected void onPostExecute(JSONArray jSON) {
-						apiAbbrev = parseAbJSON(jSON);
-						getPercentData();
-					}
-				}.execute(makeAbUrl(lastKnownLocation));
+				getAbbrev(lastKnownLocation);
 			} else {
 				//API abbrev was retrieved from the stored data but not the percent data.
 				getPercentData();
@@ -302,6 +296,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) { 
+		//Support devices with a menu button by opening the nav drawer
 		if (keyCode == KeyEvent.KEYCODE_MENU) { 
 			if (mDrawerLayout.isDrawerOpen(mDrawerList)) {
 				mDrawerLayout.closeDrawers();
@@ -323,17 +318,17 @@ public class MainActivity extends Activity {
 			class GraphGet extends AsyncTask<Context, Void, Boolean> {
 				@Override
 				protected Boolean doInBackground(Context... context) {
-					//We have to pull more data so we have at least the last day of data.
-
 					
 					//mPlot.setDomainBoundaries(0, 1440, BoundaryMode.FIXED); //TODO xml?
-					mPlot.setRangeBoundaries(0,100, BoundaryMode.FIXED); //TODO.... 
-					mPlot.setRangeStepValue(10);
-					
+					mPlot.setRangeBoundaries(0,1, BoundaryMode.FIXED); //TODO.... 
+					//mPlot.setRangeStepValue((int) 10);
+					//mPlot.setRangeBottomMin(0);
+					mPlot.setRangeValueFormat(new DecimalFormat("%"));
+
 					mPlot.setDomainValueFormat(new Format() {
 						private static final long serialVersionUID = 1L; //FIXME ?
 						
-			            private SimpleDateFormat dateFormat = new SimpleDateFormat("hha", Locale.US); //TODO internationalize
+			            private SimpleDateFormat dateFormat = new SimpleDateFormat("ha", Locale.US); //TODO internationalize
 			 
 			            @Override
 			            public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
@@ -390,6 +385,7 @@ public class MainActivity extends Activity {
 			Log.d("SettingsFragment", "Changing visiblity of graph to invisible");
 			mPlot.setVisibility(View.INVISIBLE);
 		}
+		mMenu.setGroupVisible(R.id.hide_when_drawer, false);
 		mFragMan
 		.beginTransaction()
 		.replace(R.id.main_root, new SettingsFragment() {
@@ -405,8 +401,11 @@ public class MainActivity extends Activity {
 				if (mPlot != null && mPlot.getVisibility() == View.INVISIBLE) {
 					Log.d("SettingsFragment", "Changing visiblity of graph back to visible");
 					mPlot.setVisibility(View.VISIBLE);
-					
+					if (preferencesChanged()) {
+						refreshData(true);
+					}
 				}
+				mMenu.setGroupVisible(R.id.hide_when_drawer, true);
 				super.onDestroy();
 			}
 		}, "settingsTag")
@@ -457,7 +456,6 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
-
 
 	/*Make sure our titles are correct*/
 	@Override
@@ -564,18 +562,34 @@ public class MainActivity extends Activity {
 		new APIGet() {
 			@Override
 			protected void onPostExecute(JSONArray jSON) {
-				doPostPercentGet(jSON, true);
+				doPostPercentGet(jSON, true, true);
 			}
 		}.execute(makeFullDataUrl(apiAbbrev, internetQuality()));
+	}
+	
+	private void getAbbrev(Location lastKnownLocation) {
+		Log.d("MainActivity", "Pulling the ApiAbbrev from the server");
+		new APIGet() {
+			@Override
+			protected void onPostExecute(JSONArray jSON) {
+				apiAbbrev = parseAbJSON(jSON);
+				getPercentData();
+			}
+		}.execute(makeAbUrl(lastKnownLocation));
 	}
 
 	private boolean refreshData(boolean force) {
 		Log.i("MA", "Refreshing my data");
+		final boolean replaceData = force;
 		if (apiAbbrev == null) {
-			return false; //TODO
+			// Get the last known network (coarse) location
+			LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+			String locationProvider = LocationManager.NETWORK_PROVIDER;
+			Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+			getAbbrev(lastKnownLocation);
 		} else {
 			String url;
-			if (force || mFuelData != null) {
+			if (!force && mFuelData != null) {
 				url = makeShortDataUrl(apiAbbrev, internetQuality(), mFuelData.getTimeUpdated());
 			} else {
 				url = makeFullDataUrl(apiAbbrev, internetQuality());
@@ -589,24 +603,34 @@ public class MainActivity extends Activity {
 				}
 				@Override
 				protected void onPostExecute(JSONArray jSON) {
-					doPostPercentGet(jSON, true); //TODO
+					doPostPercentGet(jSON, true, replaceData); //TODO
 				}
 			}.execute(url);
 		}
 		return true;
 	}
 
-	private void doPostPercentGet(JSONArray jSON, boolean saveIt) {
+	private void doPostPercentGet(JSONArray jSON, boolean saveIt, boolean replaceData) {
 		if (jSON == null) {
 			throwFatalServerError();
 			return;
 		} else {
-			FuelDataList data = parseDataJSON(jSON);
+			if (mFuelData == null || replaceData) {
+				mFuelData = parseDataJSON(jSON);
+			} else {
+				try {
+					mFuelData.addPoints(jSON, mRenewPrefs);
+				} catch (JSONException e) {
+					throwFatalServerError();
+					Log.e("DPPGET", "Fatal server err parsing json");
+				}
+			}
+			
 			//We have to check if our data is actually there. (Weird edge case error)
-			if (data.size() > 0) {
+			if (mFuelData.size() > 0) {
 				Log.d("dppget", "data was size.");
-				launchViews(data);
-			} else if (apiAbbrev == null || data.size() < 0) {
+				launchViews();
+			} else if (apiAbbrev == null || mFuelData.size() <= 0) {
 				Log.d("dppget", "apiabbrev null");
 				Log.e("Dppget", "Something's fucky"); //FIXME
 				//getPercentData();
@@ -642,14 +666,9 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	private void launchViews(FuelDataList fuelData) {
-		mFuelData = fuelData;
+	private void launchViews() {
 		launchGraph();
-		//This pulls our preferences, then extracts the keys we consider "green"
-		//And uses them to calculate the green %.
-
-		double d = mFuelData.getCurrentPercent();
-		
+		double d = mFuelData.getCurrentPercent(mRenewPrefs);
 		String percentFormat = mRes.getString(R.string.percentage_format);
 		String percent = String.format(Locale.US, percentFormat, d * 100);
 		mPercentage.setText(percent)	;
@@ -748,10 +767,8 @@ public class MainActivity extends Activity {
 						greens.add(kp.getKey());
 					}
 				} catch (ClassCastException e) {
-					//pass
 					//Error ignored because of non boolean prefs, which we don't care about..
-					//Possibly fix with a separate prefs file for green data
-					Log.i("Get Renew Prefs", "ClassCastException! Pass...");
+					Log.i("Get Renew Prefs", "Cast error, pass.");
 				}
 			}
 		}
@@ -763,9 +780,16 @@ public class MainActivity extends Activity {
 	private boolean preferencesChanged() {
 		if (mRenewPrefs == null) {
 			Log.d("prefs", "Preferences did not change.");
+			mRenewPrefs = getRenewablePrefs();
 			return false;
 		} else {
-			return !Arrays.deepEquals(mRenewPrefs, getRenewablePrefs());
+			String[] tRenewPrefs = getRenewablePrefs();
+			if (!Arrays.deepEquals(mRenewPrefs, getRenewablePrefs())) {
+				mRenewPrefs = tRenewPrefs;
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 
@@ -809,14 +833,17 @@ public class MainActivity extends Activity {
 	
 	private void throwFatalServerError() {
 		Toast.makeText(this, R.string.server_error, Toast.LENGTH_SHORT).show();
+		mProgressBar.setVisibility(View.INVISIBLE);
 	}
 	
 	private void throwFatalNetworkError() {
 		Toast.makeText(this, R.string.connectivity_error, Toast.LENGTH_SHORT).show(); 
+		mProgressBar.setVisibility(View.INVISIBLE);
 	}
 	
 	private void throwFatalAppError() {
 		Toast.makeText(this, R.string.app_error, Toast.LENGTH_SHORT).show();
+		mProgressBar.setVisibility(View.INVISIBLE);
 	}
 
 }

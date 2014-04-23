@@ -9,10 +9,6 @@
         android:id="@+id/main_root"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
         tools:context=".MainActivity" >
 
         <ProgressBar
@@ -31,29 +27,44 @@
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
             android:gravity="bottom"
+            android:textColor="#FFFFFF"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:visibility="invisible" />
 
         <com.androidplot.xy.XYPlot
             android:id="@+id/main_xyplot_main"
+            android:paddingBottom="0dp"
+        	android:paddingLeft="0dp"
+        	android:paddingRight="0dp"
+        	android:paddingTop="0dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_above="@id/main_percentage"
-            androidPlot.domainLabel="XAXIS"
+            androidPlot.domainLabel="@string/graph_x_axis"
+            androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size"
             androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
+            androidPlot.rangeLabelWidget.labelPaint.textSize="@dimen/range_label_font_size"
+            
+            androidPlot.graphWidget.rangeLabelPaint.textSize="@dimen/range_tick_label_font_size"
+            androidPlot.graphWidget.rangeOriginLabelPaint.textSize="@dimen/range_tick_label_font_size"
+            androidPlot.graphWidget.domainLabelPaint.textSize="@dimen/domain_tick_label_font_size"
+            androidPlot.graphWidget.domainOriginLabelPaint.textSize="@dimen/domain_tick_label_font_size"
+            
             androidPlot.graphWidget.gridLinePaint.color="#000000"
             androidPlot.graphWidget.marginBottom="25dp"
-            androidPlot.graphWidget.marginLeft="15dp"
+            androidPlot.graphWidget.marginLeft="20dp"
             androidPlot.graphWidget.marginRight="10dp"
             androidPlot.graphWidget.marginTop="20dp"
+
             androidPlot.legendWidget.heightMetric.value="25dp"
             androidPlot.legendWidget.iconSizeMetrics.heightMetric.value="15dp"
             androidPlot.legendWidget.iconSizeMetrics.widthMetric.value="15dp"
             androidPlot.legendWidget.positionMetrics.anchor="right_bottom"
-            androidPlot.legendWidget.textPaint.textSize="@dimen/legend_text_font_size"
-            androidPlot.rangeLabel="YAXIS"
-            androidPlot.title="TITLE"
-            androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size"
+            androidPlot.legendWidget.textPaint.textSize="10dp"
+            
+            androidPlot.rangeLabel="@string/graph_y_axis"
+            androidPlot.title="@string/graph_title"
+
             android:gravity="top"
             android:visibility="invisible" />
     </RelativeLayout>
@@ -64,8 +75,6 @@
         android:layout_width="240dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:background="#111"
-        
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp" />
 

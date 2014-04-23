@@ -20,7 +20,12 @@
     <string name="data_api_stem" formatted="false">http://api.watttime.org/api/v1/datapoints/?format=json&amp;?ba=%s&amp;start_at=%s&amp;end_at=%s&amp;page_size=%s&amp;freq=%s</string>
     <string name="abbr_api_stem" formatted="false">http://api.watttime.org/api/v1/balancing_authorities/?format=json&amp;loc=POINT+%%28%+09.4f%%20%+09.4f%%29</string>
 
-    <string name="percentage_format" formatted="false">%2.1f%%</string>
+    <!-- Graph string constants -->
+    <string name="graph_title">% Renewable vs Time</string>
+    <string name="graph_x_axis">Time</string>
+    <string name="graph_y_axis">% Renewable</string>
+    <string name="series_1_title">Live Data</string>
+    <string name="percentage_format" formatted="false">Your energy is %2.1f%% green</string>
     
     <string-array name="navigation_array">
         <item>Home</item>
