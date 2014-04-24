@@ -30,3 +30,7 @@ proguard/
 
 # API Key file
 src/com/github/WattTime/Keys.java
+
+# Generated files
+.DS_Store
+
