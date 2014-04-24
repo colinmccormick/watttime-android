@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.text.Format;
 import java.text.NumberFormat;
@@ -54,6 +53,7 @@ import android.widget.Toast;
 import com.androidplot.xy.BoundaryMode;
 import com.androidplot.xy.LineAndPointFormatter;
 import com.androidplot.xy.XYPlot;
+import com.androidplot.xy.XYStepMode;
 import com.github.WattTime.watttime_android.R;
 import com.github.WattTime.watttime_android.ASyncTasks.APIGet;
 import com.github.WattTime.watttime_android.DataModels.FuelDataList;
@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
 
 	/* String array containing our preferences */
 	private String[] mRenewPrefs;
-	
+
 	/* View objects that need to be edited by Java.*/
 	private ProgressBar mProgressBar; //TODO Change to windmill
 	private TextView mPercentage;
@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
 
 	/*Constant filename for caching data */
 	private final String TEMPFILENAME = "datapoints";
-	
+
 	/*Constants to describe internet quality */
 	private final int HIGH_QUALITY = 0;
 	private final int MED_QUALITY = 1;
@@ -105,21 +105,21 @@ public class MainActivity extends Activity {
 	@SuppressWarnings("resource") //scanner is tossed after use.
 	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 	@Override
-	protected void onCreate(Bundle savedInstanceState) { //TODO check if preferences have changed, reload data
+	protected void onCreate(Bundle savedInstanceState) {
 
 		// Launch loading screen
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		mProgressBar = (ProgressBar) findViewById(R.id.main_progressbar);
 		mPlot = (XYPlot) findViewById(R.id.main_xyplot_main); // For some reason calling this main_xyplot results 
-															  // in an exception. What!? 
+		// in an exception. What!? 
 		mPercentage = (TextView) findViewById(R.id.main_percentage);
 		mRes = getResources();
 		mFragMan = getFragmentManager();
-		
-		//Set default preferences on first run, solves bug (?)
+
+		//Set default preferences on first run
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-		
+
 		// ----- Set up the Nav drawer ------- //
 		mNavigationItems = mRes.getStringArray(R.array.navigation_array);
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -153,6 +153,11 @@ public class MainActivity extends Activity {
 				getActionBar().setTitle(mDrawerTitle);
 				mMenu.setGroupVisible(R.id.hide_when_drawer, false);	
 			}
+			public void onDrawerSlide(View drawerView, float slideOffset) {
+				super.onDrawerSlide(drawerView, slideOffset);
+				mMenu.setGroupVisible(R.id.hide_when_drawer, false);
+				//Trying to make the icons look.... right.
+			}
 		};
 
 		// Set the drawer toggle as the DrawerListener
@@ -166,14 +171,14 @@ public class MainActivity extends Activity {
 		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		String locationProvider = LocationManager.NETWORK_PROVIDER;
 		Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
-		
+
 		//Check for preference changes
 		boolean prefRefreshed = false;
 		if (preferencesChanged()) {
 			refreshData(true);
 			prefRefreshed = true;
 		}
-		
+
 		// Make the file before the if suite
 		File file = new File(this.getCacheDir(), TEMPFILENAME);
 		Log.d("Fileservice", "making a tempfile");
@@ -248,18 +253,15 @@ public class MainActivity extends Activity {
 			}
 		}
 		//So somewhere we didn't pick up the correct data or it needs to be re downloaded
-		if ((apiAbbrev == null || mFuelData == null) && internetConnected()) {
-			//Check to see if we need to pull all of it again
-			if (apiAbbrev == null) {
-				getAbbrev(lastKnownLocation);
-			} else {
-				//API abbrev was retrieved from the stored data but not the percent data.
-				getPercentData();
-			}
-		} else if (!internetConnected()){
+
+		if (apiAbbrev == null) {
+			getAbbrev(lastKnownLocation);
+		} else if (mFuelData == null) {
+			//API abbrev was retrieved from the stored data but not the percent data.
+			getPercentData();
+		} else if (!internetConnected()) {
 			//This means there's no network connection, so raise an error
 			throwFatalNetworkError();
-			return;
 		}
 	}
 
@@ -269,6 +271,16 @@ public class MainActivity extends Activity {
 		// Sync the toggle state after onRestoreInstanceState has occurred.
 		mDrawerToggle.syncState();
 	}
+	/*
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (apiAbbrev == null) {
+			
+		} else if (mFuelData == null || mFuelData.size() == 0) {
+			
+		}
+	} */
 
 	/*
 	 * (non-Javadoc)
@@ -319,35 +331,21 @@ public class MainActivity extends Activity {
 			class GraphGet extends AsyncTask<Context, Void, Boolean> {
 				@Override
 				protected Boolean doInBackground(Context... context) {
-					
-					//mPlot.setDomainBoundaries(0, 1440, BoundaryMode.FIXED); //TODO xml?
-					mPlot.setRangeBoundaries(0,1, BoundaryMode.FIXED); //TODO.... 
-					//mPlot.setRangeStepValue((int) 10);
-					//mPlot.setRangeBottomMin(0);
+					// Set up the range behavior
+					mPlot.setRangeBoundaries(0, BoundaryMode.FIXED, 1, BoundaryMode.SHRINNK); //Oh my god it's spelled wrong in the library.
+					mPlot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, 0.1);
 					NumberFormat rangeFormat = NumberFormat.getPercentInstance();
 					mPlot.setRangeValueFormat(rangeFormat);
 
-					mPlot.setDomainValueFormat(new Format() {
-						private static final long serialVersionUID = 1L; //FIXME ?
-						
-			            private SimpleDateFormat dateFormat = new SimpleDateFormat("ha", Locale.US); //TODO internationalize
-			 
-			            @Override
-			            public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
-			                long timestamp = ((Number) obj).longValue();
-			                Date date = new Date(timestamp);
-			                return dateFormat.format(date, toAppendTo, pos);
-			            }
-
-			            @Override
-			            public Object parseObject(String source, ParsePosition pos) {
-			                return null;
-			            }
-			        });
+					//Set up the domain behavior. 
+					mPlot.setDomainValueFormat(new SimpleDateFormat("ha", Locale.US));
 					
+					//Set up the line format
 					LineAndPointFormatter series1Format = new LineAndPointFormatter();
 					series1Format.setPointLabelFormatter(null);
 					series1Format.configure(context[0], R.xml.line_point_formatter_with_plf1);
+					
+					//Add the data to the chart
 					mPlot.addSeries(mFuelData.getLastDayPoints(), series1Format);
 					return true;
 				}
@@ -374,7 +372,7 @@ public class MainActivity extends Activity {
 			Log.d("Settings frag", "Refused to open another settingsfragment");
 			return false;
 		}
-		
+
 		// Hide the progressbar/percentage indicators before launching the fragment.
 		if (mProgressBar != null && mProgressBar.getVisibility() == View.VISIBLE) {
 			mProgressBar.setVisibility(View.INVISIBLE);
@@ -487,7 +485,10 @@ public class MainActivity extends Activity {
 		// Hide things that wouldn't make sense otherwise
 		boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList); //use to check if the drawer is open
 		if (drawerOpen) {
+			mMenu.setGroupVisible(R.id.hide_when_drawer, false);
 			return false;
+		} else {
+			mMenu.setGroupVisible(R.id.hide_when_drawer, true);
 		}
 		return true;
 	}
@@ -568,7 +569,7 @@ public class MainActivity extends Activity {
 			}
 		}.execute(makeFullDataUrl(apiAbbrev, internetQuality()));
 	}
-	
+
 	private void getAbbrev(Location lastKnownLocation) {
 		Log.d("MainActivity", "Pulling the ApiAbbrev from the server");
 		new APIGet() {
@@ -581,6 +582,10 @@ public class MainActivity extends Activity {
 	}
 
 	private boolean refreshData(boolean force) {
+		if (!internetConnected()) {
+			throwFatalNetworkError();
+			return false;
+		}
 		Log.i("MA", "Refreshing my data");
 		final boolean replaceData = force;
 		if (apiAbbrev == null) {
@@ -592,9 +597,12 @@ public class MainActivity extends Activity {
 		} else {
 			String url;
 			if (!force && mFuelData != null) {
+				//Add a new datapoint
 				url = makeShortDataUrl(apiAbbrev, internetQuality(), mFuelData.getTimeUpdated());
 			} else {
+				//Full data refresh
 				url = makeFullDataUrl(apiAbbrev, internetQuality());
+				mPlot.clear();
 			}
 			new APIGet() {
 				@Override
@@ -627,23 +635,21 @@ public class MainActivity extends Activity {
 					Log.e("DPPGET", "Fatal server err parsing json");
 				}
 			}
-			
+
 			//We have to check if our data is actually there. (Weird edge case error)
 			if (mFuelData.size() > 0) {
-				Log.d("dppget", "data was size.");
+				Log.d("dppget", "Launching views");
 				launchViews();
 			} else if (apiAbbrev == null || mFuelData.size() <= 0) {
-				Log.d("dppget", "apiabbrev null");
-				Log.e("Dppget", "Something's fucky"); //FIXME
-				//getPercentData();
+				Log.e("dppget", "Missing data, failed to load.");
 			}
 		}
-		
+
 		//Save our JSON to a file so we might not need to get it next time.
 		if (saveIt) {
 			File file;
 			Log.d("Saving", "Saving my JSON to a file.");
-			
+
 			// Get the last known network (coarse) location
 			LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 			String locationProvider = LocationManager.NETWORK_PROVIDER;
@@ -652,7 +658,7 @@ public class MainActivity extends Activity {
 			try {
 				loc.put("lat", lastKnownLocation.getLatitude());
 				loc.put("lon", lastKnownLocation.getLongitude());
-				jSON.put(1,loc);
+				jSON.put(1, loc);
 			} catch (JSONException e1) {
 				Log.w("JSONSave", "Couldn't store latlon!");
 			}
@@ -667,13 +673,13 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
-	
+
 	private void launchViews() {
 		launchGraph();
 		double d = mFuelData.getCurrentPercent(mRenewPrefs);
 		String percentFormat = mRes.getString(R.string.percentage_format);
 		String percent = String.format(Locale.US, percentFormat, d * 100);
-		mPercentage.setText(percent)	;
+		mPercentage.setText(percent);
 		mProgressBar.setVisibility(View.GONE);
 		mPercentage.setVisibility(View.VISIBLE);
 	}
@@ -694,8 +700,8 @@ public class MainActivity extends Activity {
 		//Form API Url
 		double lon = loc.getLongitude();
 		double lat = loc.getLatitude();
-		final String abbrStem= mRes.getString(R.string.abbr_api_stem);
-		String apiUrl = String.format(Locale.US, abbrStem, lon,lat);
+		final String abbrStem = mRes.getString(R.string.abbr_api_stem);
+		String apiUrl = String.format(Locale.US, abbrStem, lon, lat);
 		return apiUrl;
 
 	}
@@ -712,16 +718,16 @@ public class MainActivity extends Activity {
 		startTime.switchTimezone(Time.getCurrentTimezone());
 		return makeShortDataUrl(balancingAuth, internetQual, startTime);
 	}
-	
+
 	private String makeShortDataUrl(String balancingAuth, int internetQual, Time lastUpdate) {
 		String dataStem = mRes.getString(R.string.data_api_stem);
 		Time startTime = lastUpdate;
 		Time endTime = new Time(startTime);
 		endTime.set(59, 59, 23, endTime.monthDay, endTime.month, endTime.year);
-		
+
 		endTime.switchTimezone(Time.getCurrentTimezone());
 		startTime.switchTimezone(Time.getCurrentTimezone());
-		
+
 		String start = startTime.format3339(false);
 		String end = endTime.format3339(false);
 		String pageSize;
@@ -754,11 +760,11 @@ public class MainActivity extends Activity {
 	 */
 	private String pullApiAbbrev(String url) {
 		Log.d("Pulling API Abbrev", url);
-		return url.substring(61, (url.indexOf('&') == -1 ) ? url.length() : url.indexOf('&'));
+		return url.substring(61, (url.indexOf('&') == -1) ? url.length() : url.indexOf('&'));
 	}
 
 	/* -------------------- UTILITY METHODS ----------------- */
-	
+
 	private String[] getRenewablePrefs() {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		ArrayList<String> greens = new ArrayList<String>(17);
@@ -778,7 +784,7 @@ public class MainActivity extends Activity {
 		renewables = greens.toArray(renewables);
 		return renewables;
 	}
-	
+
 	private boolean preferencesChanged() {
 		if (mRenewPrefs == null) {
 			Log.d("prefs", "Preferences did not change.");
@@ -788,6 +794,7 @@ public class MainActivity extends Activity {
 			String[] tRenewPrefs = getRenewablePrefs();
 			if (!Arrays.deepEquals(mRenewPrefs, getRenewablePrefs())) {
 				mRenewPrefs = tRenewPrefs;
+				mFuelData = null;
 				return true;
 			} else {
 				return false;
@@ -808,7 +815,7 @@ public class MainActivity extends Activity {
 		}
 		return true;
 	}
-	
+
 	private int internetQuality() {
 		ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
@@ -832,17 +839,17 @@ public class MainActivity extends Activity {
 			return LOW_QUALITY;
 		}
 	}
-	
+
 	private void throwFatalServerError() {
 		Toast.makeText(this, R.string.server_error, Toast.LENGTH_SHORT).show();
 		mProgressBar.setVisibility(View.INVISIBLE);
 	}
-	
+
 	private void throwFatalNetworkError() {
 		Toast.makeText(this, R.string.connectivity_error, Toast.LENGTH_SHORT).show(); 
 		mProgressBar.setVisibility(View.INVISIBLE);
 	}
-	
+
 	private void throwFatalAppError() {
 		Toast.makeText(this, R.string.app_error, Toast.LENGTH_SHORT).show();
 		mProgressBar.setVisibility(View.INVISIBLE);

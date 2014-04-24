@@ -3,12 +3,12 @@
     android:id="@+id/watttime_appwidget"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/appwidget_background"
     android:padding="@dimen/widget_margin" >
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/appwidget_background"
         android:orientation="horizontal" >
 
         <TextView
@@ -20,7 +20,8 @@
             android:id="@+id/widget_stoplight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawable="@drawable/ic_action_settings" />
+            android:drawable="@drawable/ic_action_settings"
+            android:contentDescription="@string/widget_alt_text" />
     </RelativeLayout>
 
 </FrameLayout>

@@ -6,7 +6,7 @@
         res/values-v11/styles.xml on API 14+ devices.
     -->
     <style 
-        name="WattTimeTheme" parent="android:Theme.Holo.Light.DarkActionBar" >
+        name="WattTimeTheme" parent="android:Theme.Holo.Light" >
         <!-- API 14 theme customizations can go here. -->
         <item name="android:actionBarStyle">@style/WattTimeBar</item>
         <item name="android:background">#002C3C</item>
@@ -27,7 +27,7 @@
     </style>
     
   	<style name="LargeTextAppearance" parent="@android:style/TextAppearance.Large">
-    	<item name="android:textColor">#ff0000</item>
+    	<item name="android:textColor">#FFFFFF</item>
 	</style>
     
 
