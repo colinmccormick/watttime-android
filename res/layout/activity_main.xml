@@ -33,10 +33,7 @@
 
         <com.androidplot.xy.XYPlot
             android:id="@+id/main_xyplot_main"
-            android:paddingBottom="0dp"
-        	android:paddingLeft="0dp"
-        	android:paddingRight="0dp"
-        	android:paddingTop="0dp"
+            style="@style/GraphStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_above="@id/main_percentage"
@@ -44,6 +41,8 @@
             androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size"
             androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
             androidPlot.rangeLabelWidget.labelPaint.textSize="@dimen/range_label_font_size"
+            androidPlot.rangeLabel="@string/graph_y_axis"
+        	androidPlot.title="@string/graph_title"
             
             androidPlot.graphWidget.rangeLabelPaint.textSize="@dimen/range_tick_label_font_size"
             androidPlot.graphWidget.rangeOriginLabelPaint.textSize="@dimen/range_tick_label_font_size"
@@ -62,8 +61,7 @@
             androidPlot.legendWidget.positionMetrics.anchor="right_bottom"
             androidPlot.legendWidget.textPaint.textSize="10dp"
             
-            androidPlot.rangeLabel="@string/graph_y_axis"
-            androidPlot.title="@string/graph_title"
+            
 
             android:gravity="top"
             android:visibility="invisible" />
