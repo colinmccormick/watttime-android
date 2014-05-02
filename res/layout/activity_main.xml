@@ -43,6 +43,7 @@
             androidPlot.rangeLabelWidget.labelPaint.textSize="@dimen/range_label_font_size"
             androidPlot.rangeLabel="@string/graph_y_axis"
         	androidPlot.title="@string/graph_title"
+        	androidPlot.renderMode="use_background_thread"
             
             androidPlot.graphWidget.rangeLabelPaint.textSize="@dimen/range_tick_label_font_size"
             androidPlot.graphWidget.rangeOriginLabelPaint.textSize="@dimen/range_tick_label_font_size"
