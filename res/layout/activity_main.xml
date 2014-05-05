@@ -34,9 +34,7 @@
         <com.androidplot.xy.XYPlot
             android:id="@+id/main_xyplot_main"
             style="@style/GraphStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/main_percentage"
+            
             androidPlot.domainLabel="@string/graph_x_axis"
             androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size"
             androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
@@ -62,9 +60,9 @@
             androidPlot.legendWidget.positionMetrics.anchor="right_bottom"
             androidPlot.legendWidget.textPaint.textSize="10dp"
             
-            
-
+            android:layout_above="@id/main_percentage"
             android:gravity="top"
+            
             android:visibility="invisible" />
     </RelativeLayout>
     <!-- The navigation drawer -->
