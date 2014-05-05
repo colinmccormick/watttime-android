@@ -20,7 +20,6 @@
             android:id="@+id/widget_stoplight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawable="@drawable/ic_action_settings"
             android:contentDescription="@string/widget_alt_text" />
     </RelativeLayout>
 

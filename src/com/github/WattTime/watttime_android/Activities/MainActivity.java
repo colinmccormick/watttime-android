@@ -330,7 +330,7 @@ public class MainActivity extends Activity {
 			Log.e("LaunchGraph", "You tried to launch a graph without data");
 			return false;
 		} else {
-			Log.d("LaunchGraph", "Launching the graph");
+			Log.w("LaunchGraph", "Launching the graph");
 			class GraphGet extends AsyncTask<Context, Void, Boolean> {
 				@Override
 				protected Boolean doInBackground(Context... context) {
