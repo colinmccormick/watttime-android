@@ -6,22 +6,16 @@
     android:background="@drawable/appwidget_background"
     android:padding="@dimen/widget_margin" >
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal" >
+    <TextView
+        android:id="@+id/widget_percentage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-        <TextView
-            android:id="@+id/widget_percentage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <ImageView
-            android:id="@+id/widget_stoplight"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawable="@drawable/ic_action_settings"
-            android:contentDescription="@string/widget_alt_text" />
-    </RelativeLayout>
+    <ImageView
+        android:id="@+id/widget_stoplight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/widget_alt_text"
+        android:drawable="@drawable/ic_action_settings" />
 
 </FrameLayout>

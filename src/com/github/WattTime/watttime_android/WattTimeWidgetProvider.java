@@ -25,8 +25,7 @@ import com.github.WattTime.watttime_android.ASyncTasks.APIGet;
 import com.github.WattTime.watttime_android.Activities.MainActivity;
 import com.github.WattTime.watttime_android.Utilites.Utilities;
 
-//TODO
-// Make the widget only update when the phone is awake
+//TODO Make the widget only update when the phone is awake
 public class WattTimeWidgetProvider extends AppWidgetProvider {
 	Context mContext;
 	AppWidgetManager mAppWidgetManager;
@@ -48,6 +47,8 @@ public class WattTimeWidgetProvider extends AppWidgetProvider {
 		final String abbrevURL = Utilities.makeAbbrevURL(lastKnownLocation, abbrevStem);
 		final ArrayList<String> prefs = Utilities.getPrefsAsList(PreferenceManager.getDefaultSharedPreferences(context));
 
+		//TODO cache location data.
+		// @see Storing data in sharedpreferences
 		if (internetConnected(context)) {
 			new APIGet() {
 				@Override

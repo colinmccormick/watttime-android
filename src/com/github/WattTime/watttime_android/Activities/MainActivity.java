@@ -91,6 +91,9 @@ public class MainActivity extends Activity {
 	private ActionBarDrawerToggle mDrawerToggle;
 	private CharSequence mDrawerTitle;
 	private CharSequence mTitle;
+	
+	/*FIXME*/
+	private boolean setFrag;
 
 	/* -------------- APP LIFECYCLE METHODS ------------------ */
 
@@ -102,7 +105,9 @@ public class MainActivity extends Activity {
 	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-
+		//FIXME
+		setFrag = false;
+		
 		// Launch loading screen
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
@@ -140,7 +145,9 @@ public class MainActivity extends Activity {
 			public void onDrawerClosed(View view) {
 				super.onDrawerClosed(view);
 				getActionBar().setTitle(mTitle);
-				mMenu.setGroupVisible(R.id.hide_when_drawer, true);
+				if (!setFrag) { 
+					mMenu.setGroupVisible(R.id.hide_when_drawer, true);
+				}
 			}
 
 			/* Called when a drawer has settled in a completely open state. */
@@ -363,6 +370,7 @@ public class MainActivity extends Activity {
 
 	private boolean launchSettingsFragment() {
 		//Check to see if there's already a settings fragment there.
+		setFrag = true;
 		SettingsFragment test = (SettingsFragment) getFragmentManager().findFragmentByTag("settingsTag");
 		if (test != null && test.isVisible()) {
 			Log.d("Settings frag", "Refused to open another settingsfragment");
@@ -387,6 +395,7 @@ public class MainActivity extends Activity {
 		.replace(R.id.main_root, new SettingsFragment() {
 			@Override 
 			public void onDestroy() {
+				setFrag = false;
 				if (mProgressBar != null && mProgressBar.getVisibility() == View.INVISIBLE) {
 					Log.d("SettingsFragment", "Changing visiblity of progressbar back to visible.");
 					mProgressBar.setVisibility(View.VISIBLE);
