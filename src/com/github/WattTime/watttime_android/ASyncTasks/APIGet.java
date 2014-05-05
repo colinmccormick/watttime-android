@@ -26,10 +26,15 @@ public class APIGet extends AsyncTask<String, Void, JSONArray> {
 
 		/*Pull JSON from server*/
 		StringBuilder sb = new StringBuilder();
+		long startTime = -1;
 		try {
 			URL url = new URL(urlIn[0]);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			
 			Log.d("APIConnection", "Opened a connection");
+			
+			startTime = System.currentTimeMillis();
+			
 			conn.setReadTimeout(10000 /* milliseconds */);
 			conn.setConnectTimeout(15000 /* milliseconds */);
 			conn.setRequestMethod("GET");
@@ -73,6 +78,8 @@ public class APIGet extends AsyncTask<String, Void, JSONArray> {
 				return null;
 			}
 		}
+		long endTime = System.currentTimeMillis();
+		Log.d("APIGet", "Time took " + (endTime - startTime) +"ms");
 		return jSON;
 	}
 }
