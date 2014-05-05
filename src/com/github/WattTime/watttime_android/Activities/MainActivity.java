@@ -92,7 +92,7 @@ public class MainActivity extends Activity {
 	private CharSequence mDrawerTitle;
 	private CharSequence mTitle;
 	
-	/*FIXME*/
+	/*FIXME this is a temporary thing*/
 	private boolean setFrag;
 
 	/* -------------- APP LIFECYCLE METHODS ------------------ */

@@ -1,5 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-     <integer name="min_data_refresh">300000</integer>
-     <integer name="max_distance_change">32187</integer>
+
+    <integer name="min_data_refresh">300000</integer>
+    <integer name="max_distance_change">32187</integer>
+
+    <integer-array name="CAISO">
+        <item>975</item>
+        <item>1075</item>
+    </integer-array>
+    
+    <integer-array name="BPA">
+        <item>160</item>
+        <item>195</item>
+    </integer-array>
+    
+    <integer-array name="PJM">
+        <item>1450</item>
+        <item>1470</item>
+    </integer-array>
+    
+    <integer-array name="MISO">
+        <item>1590</item>
+        <item>1670</item>
+    </integer-array>
+    
+    <integer-array name="ERCOT">
+        <item>1255</item>
+        <item>1380</item>
+    </integer-array>
+    
+    <integer-array name="SPP">
+        <item>1450</item>
+        <item>1585</item>
+    </integer-array>
+    
+    <integer-array name="ISONE">
+        <item>675</item>
+        <item>760</item>
+    </integer-array>
+
 </resources>
