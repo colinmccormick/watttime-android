@@ -330,19 +330,19 @@ public class MainActivity extends Activity {
 			Log.e("LaunchGraph", "You tried to launch a graph without data");
 			return false;
 		} else {
-			Log.w("LaunchGraph", "Launching the graph");
+			Log.d("LaunchGraph", "Launching the graph");
 			class GraphGet extends AsyncTask<Context, Void, Boolean> {
 				@Override
 				protected Boolean doInBackground(Context... context) {
 					// Set up the range behavior
-					mPlot.setRangeBoundaries(0, BoundaryMode.FIXED, 1, BoundaryMode.SHRINNK); //Oh my god it's spelled wrong in the library.
+				    mPlot.setRangeBoundaries(0, BoundaryMode.FIXED, 1, BoundaryMode.SHRINNK); //Oh my god it's spelled wrong in the library.
 					mPlot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, 0.1);
 					NumberFormat rangeFormat = NumberFormat.getPercentInstance();
 					mPlot.setRangeValueFormat(rangeFormat);
 
 					//Set up the domain behavior. 
 					mPlot.setDomainValueFormat(new SimpleDateFormat("ha", Locale.US));
-					
+
 					//Set up the line format
 					LineAndPointFormatter series1Format = new LineAndPointFormatter();
 					series1Format.setPointLabelFormatter(null);
@@ -755,7 +755,7 @@ public class MainActivity extends Activity {
 			freq = "1h";
 			break;
 		}
-		return String.format(Locale.US, dataStem, balancingAuth, start, end, pageSize, freq);
+		return String.format(Locale.US, dataStem, start, end, pageSize, freq, balancingAuth);
 	}
 	/**
 	 * Utility method to get the apiabbrev out of a data API url.

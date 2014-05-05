@@ -129,6 +129,7 @@ public class FuelDataList implements Parcelable {
 				long millis = newTime.toMillis(false);
 				double percent = fDatPt.getPercentGreen(prefs);
 				((SimpleXYSeries) mXYSeries).addLast(millis, percent);
+				Log.i("FuelDataList", "Adding a point: " + newTime.hour +":" + newTime.minute + " , " + percent);
 			}
 		}
 	}

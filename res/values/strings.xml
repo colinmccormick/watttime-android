@@ -17,7 +17,7 @@
     <string name="reset_defaults">Reset to defaults</string>
     <string name="reset_summary">This will reset all your preferences!</string>
     
-    <string name="data_api_stem" formatted="false">http://api.watttime.org/api/v1/datapoints/?format=json&amp;?ba=%s&amp;start_at=%s&amp;end_at=%s&amp;page_size=%s&amp;freq=%s</string>
+    <string name="data_api_stem" formatted="false">http://api.watttime.org/api/v1/datapoints/?format=json&amp;start_at=%s&amp;end_at=%s&amp;page_size=%s&amp;freq=%s&amp;?ba=%s</string>
     <string name="abbr_api_stem" formatted="false">http://api.watttime.org/api/v1/balancing_authorities/?format=json&amp;loc=POINT+%%28%+09.4f%%20%+09.4f%%29</string>
     
     <!-- Graph string constants -->

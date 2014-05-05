@@ -27,7 +27,7 @@ public class FuelDataPoint implements Parcelable {
 		dataTime = new Time();
 		dataTime.parse3339(UTCTime);
 		dataPts = new HashMap<String, Double>();
-		Log.i("Timepoint", dataTime.toString());
+		//Log.i("Timepoint", dataTime.toString());
 	}
 	public FuelDataPoint(Time timeIn) {
 		dataTime = timeIn;
