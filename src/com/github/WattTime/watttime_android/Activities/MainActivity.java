@@ -25,7 +25,9 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
@@ -404,7 +406,6 @@ public class MainActivity extends Activity {
 					p.setColor(Color.TRANSPARENT); //TODO Externalize this..
 					//mPlot.setBackgroundPaint(p);
 					
-					
 					//Get the graph widget (Method not in javadocs, cool, right!?)
 					XYGraphWidget mWid = mPlot.getGraphWidget();
 					mWid.setRangeGridLinePaint(p);
@@ -422,13 +423,25 @@ public class MainActivity extends Activity {
 					mPlot.getBackgroundPaint().setColor(Color.parseColor("#002C3C"));
 					//mPlot.setPlotMargins(0, 0, 0, 0);
 					
+					//Try and thicken the axes
+					mWid.getDomainOriginLinePaint().setStrokeWidth(4);
+					mWid.getRangeOriginLinePaint().setStrokeWidth(4);
+					
 					//Set up the line format
+					Paint lineFill = new Paint();
+			        lineFill.setAlpha(200); //SO MANY MAGIC NUMBERS
+			        //That third number below is the end position for gradient... such magic.
+			        lineFill.setShader(new LinearGradient(0, 0, 0, 490, Color.argb(90, 0,120,0), Color.argb(180, 0,200,0), Shader.TileMode.MIRROR));
+			        
 					LineAndPointFormatter series1Format = new LineAndPointFormatter(
 			                Color.rgb(0, 200, 0),                   // line color
 			                null,                   				// point color
-			                null,                                   // fill color (none)
+			                Color.rgb(0, 200, 0),                                   // fill color (none)
 			                new PointLabelFormatter(Color.WHITE));
+					series1Format.setFillPaint(lineFill);
 					series1Format.setPointLabelFormatter(null);
+					series1Format.getLinePaint().setStrokeWidth(10);
+					series1Format.getLinePaint().setStrokeMiter(100); //Not sure if this does anything..
 					//series1Format.configure(context[0], R.xml.line_point_formatter_with_plf1);
 					//Add the data to the chart
 					mPlot.addSeries(mFuelData.getLastDayPoints(), series1Format);
