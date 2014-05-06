@@ -3,6 +3,7 @@
  */
 package com.github.WattTime.watttime_android.Fragments;
 
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -35,7 +36,11 @@ public class SettingsFragment extends PreferenceFragment {
         			editor.commit();
         			PreferenceManager.setDefaultValues(mContext, R.xml.preferences, true);
         			addPreferencesFromResource(R.xml.preferences);
-        			getActivity().getFragmentManager().popBackStackImmediate();
+        			FragmentManager mFragMan = getActivity().getFragmentManager();
+        			int entryCount = mFragMan.getBackStackEntryCount(); 
+    			    while (entryCount-- > 0) {
+    			        mFragMan.popBackStackImmediate();
+    			    }
         			return true;
         		}
 			} 

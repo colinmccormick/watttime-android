@@ -19,6 +19,7 @@ import org.json.JSONObject;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -65,6 +66,8 @@ import com.androidplot.xy.XYStepMode;
 import com.github.WattTime.watttime_android.R;
 import com.github.WattTime.watttime_android.ASyncTasks.APIGet;
 import com.github.WattTime.watttime_android.DataModels.FuelDataList;
+import com.github.WattTime.watttime_android.Fragments.AboutFragment;
+import com.github.WattTime.watttime_android.Fragments.DeviceFragment;
 import com.github.WattTime.watttime_android.Fragments.SettingsFragment;
 
 public class MainActivity extends Activity {
@@ -112,7 +115,11 @@ public class MainActivity extends Activity {
 	
 	/*FIXME this is a temporary thing*/
 	private boolean setFrag;
+	private boolean aboutFrag;
+	private boolean deviceFrag;
 
+	//TODO s:
+	//widget resizing
 	/* -------------- APP LIFECYCLE METHODS ------------------ */
 
 	/*
@@ -125,6 +132,8 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		//FIXME
 		setFrag = false;
+		aboutFrag = false;
+		deviceFrag = false;
 		
 		// Launch loading screen
 		super.onCreate(savedInstanceState);
@@ -166,7 +175,7 @@ public class MainActivity extends Activity {
 			public void onDrawerClosed(View view) {
 				super.onDrawerClosed(view);
 				getActionBar().setTitle(mTitle);
-				if (!setFrag) { 
+				if (!setFrag && !aboutFrag && !deviceFrag) { 
 					mMenu.setGroupVisible(R.id.hide_when_drawer, true);
 				}
 			}
@@ -458,6 +467,7 @@ public class MainActivity extends Activity {
 							String percent = String.format(Locale.US, percentFormat, d * 100);
 							mPercentage.setText(percent);
 						}
+						mProgressBar.setVisibility(View.GONE);
 						mPlot.setVisibility(View.VISIBLE);
 						mLinearHolder.setVisibility(View.VISIBLE);
 					} else {
@@ -526,11 +536,109 @@ public class MainActivity extends Activity {
 		.commit();
 		return true;
 	}
-	private void launchAboutFragment() {
-		//do
+	private boolean launchAboutFragment() {
+		//Check to see if there's already an about fragment there.
+		aboutFrag = true;
+		Fragment test = (Fragment) getFragmentManager().findFragmentByTag("aboutTag");
+		if (test != null && test.isVisible()) {
+			Log.d(tag, "Refused to open another aboutfragment");
+			return false;
+		}
+
+		// Hide the progressbar/percentage indicators before launching the fragment.
+		if (mProgressBar != null && mProgressBar.getVisibility() == View.VISIBLE) {
+			mProgressBar.setVisibility(View.INVISIBLE);
+			Log.d(tag, "Changing visiblity of progressbar to invisible.");
+		} else if (mPercentage != null && mPercentage.getVisibility() == View.VISIBLE) {
+			mPercentage.setVisibility(View.INVISIBLE);
+			mLinearHolder.setVisibility(View.INVISIBLE);
+			Log.d(tag, "Changing visiblity of percentage to invisible");
+		} 
+		if (mPlot != null && mPlot.getVisibility() == View.VISIBLE) {
+			Log.d(tag, "Changing visiblity of graph to invisible");
+			mPlot.setVisibility(View.INVISIBLE);
+			mLinearHolder.setVisibility(View.INVISIBLE);
+		}
+		mMenu.setGroupVisible(R.id.hide_when_drawer, false);
+		mFragMan
+		.beginTransaction()
+		.replace(R.id.main_root, new AboutFragment() {
+			@Override 
+			public void onDestroy() {
+				aboutFrag = false;
+				if (mProgressBar != null && mProgressBar.getVisibility() == View.INVISIBLE) {
+					Log.d(tag, "Changing visiblity of progressbar back to visible.");
+					mProgressBar.setVisibility(View.VISIBLE);
+				} else if (mPercentage != null && mPercentage.getVisibility() == View.INVISIBLE) {
+					Log.d(tag, "Changing visiblity of percentage back to visible");
+					mPercentage.setVisibility(View.VISIBLE);
+					mLinearHolder.setVisibility(View.VISIBLE);
+				} 
+				if (mPlot != null && mPlot.getVisibility() == View.INVISIBLE) {
+					Log.d(tag, "Changing visiblity of graph back to visible");
+					mPlot.setVisibility(View.VISIBLE);
+					mLinearHolder.setVisibility(View.VISIBLE);
+				}
+				mMenu.setGroupVisible(R.id.hide_when_drawer, true);
+				super.onDestroy();
+			}
+		}, "aboutTag")
+		.addToBackStack(null)
+		.commit();
+		return true;
+		//TODO Manage the back stack a little bit better.
 	}
-	private void launchEmbeddedDevices() {
-		//do
+	private boolean launchEmbeddedDevices() {
+		//Check to see if there's already a settings fragment there.
+		deviceFrag = true;
+		Fragment test = (Fragment) getFragmentManager().findFragmentByTag("deviceTag");
+		if (test != null && test.isVisible()) {
+			Log.d(tag, "Refused to open another devicefragment");
+			return false;
+		}
+
+		// Hide the progressbar/percentage indicators before launching the fragment.
+		if (mProgressBar != null && mProgressBar.getVisibility() == View.VISIBLE) {
+			mProgressBar.setVisibility(View.INVISIBLE);
+			Log.d(tag, "Changing visiblity of progressbar to invisible.");
+		} else if (mPercentage != null && mPercentage.getVisibility() == View.VISIBLE) {
+			mPercentage.setVisibility(View.INVISIBLE);
+			mLinearHolder.setVisibility(View.INVISIBLE);
+			Log.d(tag, "Changing visiblity of percentage to invisible");
+		} 
+		if (mPlot != null && mPlot.getVisibility() == View.VISIBLE) {
+			Log.d(tag, "Changing visiblity of graph to invisible");
+			mPlot.setVisibility(View.INVISIBLE);
+			mLinearHolder.setVisibility(View.INVISIBLE);
+		}
+		mMenu.setGroupVisible(R.id.hide_when_drawer, false);
+		mFragMan
+		.beginTransaction()
+		.replace(R.id.main_root, new DeviceFragment() {
+			@Override 
+			public void onDestroy() {
+				deviceFrag = false;
+				if (mProgressBar != null && mProgressBar.getVisibility() == View.INVISIBLE) {
+					Log.d(tag, "Changing visiblity of progressbar back to visible.");
+					mProgressBar.setVisibility(View.VISIBLE);
+				} else if (mPercentage != null && mPercentage.getVisibility() == View.INVISIBLE) {
+					Log.d(tag, "Changing visiblity of percentage back to visible");
+					mPercentage.setVisibility(View.VISIBLE);
+					mLinearHolder.setVisibility(View.VISIBLE);
+				} 
+				if (mPlot != null && mPlot.getVisibility() == View.INVISIBLE) {
+					Log.d(tag, "Changing visiblity of graph back to visible");
+					mPlot.setVisibility(View.VISIBLE);
+					mLinearHolder.setVisibility(View.VISIBLE);
+				}
+				mMenu.setGroupVisible(R.id.hide_when_drawer, true);
+				super.onDestroy();
+			}
+		}, "deviceTag")
+		.addToBackStack(null)
+		.commit();
+		return true;
+		//TODO Manage the back stack a little bit better.
 	}
 
 
@@ -544,12 +652,10 @@ public class MainActivity extends Activity {
 			case 0:
 				//HOME
 				Log.d(tag, "home");
-				//If settingsfrag is present and visible, close it.
-				SettingsFragment settingsFrag = (SettingsFragment) mFragMan.findFragmentByTag("settingsTag");
-				if (settingsFrag != null && settingsFrag.isVisible()) {
-					Log.d(tag, "Closing settingsfragment");
-					mFragMan.popBackStackImmediate();
-				}
+				int entryCount = mFragMan.getBackStackEntryCount(); 
+			    while (entryCount-- > 0) {
+			        mFragMan.popBackStackImmediate();
+			    }
 				break;
 			case 1:
 				//EMBEDDED DEVICES
@@ -792,7 +898,6 @@ public class MainActivity extends Activity {
 	private void launchViews() {
 		launchGraph();
 
-		mProgressBar.setVisibility(View.GONE);
 		mPercentage.setVisibility(View.VISIBLE);
 		//mLinearHolder.setVisibility(View.VISIBLE);
 	}

@@ -21,6 +21,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import com.github.WattTime.watttime_android.R;
 import com.github.WattTime.watttime_android.ASyncTasks.APIGet;
 import com.github.WattTime.watttime_android.Activities.MainActivity;
 import com.github.WattTime.watttime_android.Utilites.Utilities;
