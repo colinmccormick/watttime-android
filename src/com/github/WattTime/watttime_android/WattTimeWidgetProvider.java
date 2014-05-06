@@ -30,12 +30,15 @@ public class WattTimeWidgetProvider extends AppWidgetProvider {
 	Context mContext;
 	AppWidgetManager mAppWidgetManager;
 	int[] mAppWidgetIds;
+	double mCarbonCount;
+	final static String tag = "WattTimeWidgetHome";
 
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		//Save globals
 		mContext = context;
 		mAppWidgetManager = appWidgetManager;
 		mAppWidgetIds = appWidgetIds;
+		mCarbonCount = 0;
 
 		//Pull location data and make an API request(s) to get the percentage data
 		LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -60,11 +63,15 @@ public class WattTimeWidgetProvider extends AppWidgetProvider {
 							JSONObject jSON;
 							double total = 0;
 							double green = 0;
+							if (jSONArray == null) {
+								return; //TODO change to no network icons. <no fatal crash if server craps>
+							} 
 							try {
 								jSON = jSONArray.getJSONObject(0);
 								if (jSON.has("results")) {
 									JSONObject results = jSON.getJSONArray("results").getJSONObject(0);
 									if (results != null) {
+										mCarbonCount = results.getDouble("carbon");
 										JSONArray genmix = results.getJSONArray("genmix");
 										for(int j = 0; j < genmix.length(); j += 1) {
 											JSONObject pt = genmix.getJSONObject(j);
@@ -78,7 +85,7 @@ public class WattTimeWidgetProvider extends AppWidgetProvider {
 									}
 								}	
 							} catch (JSONException e) {
-								Log.e("WattTimeWidget", "Parsing data from server failed.");
+								Log.e(tag, "Parsing data from server failed.");
 							}
 							double percentage = green / total;
 							doPostComplete(percentage);
@@ -101,8 +108,24 @@ public class WattTimeWidgetProvider extends AppWidgetProvider {
 			// Get the layout for the App Widget and attach an on-click listener
 			// to the button
 			RemoteViews views = new RemoteViews(mContext.getPackageName(), R.layout.widget_layout);
-			views.setTextViewText(R.id.widget_percentage, MessageFormat.format("{0,number,#.##%}", percent));
+			views.setTextViewText(R.id.widget_percentage_2, MessageFormat.format("{0,number,#.#%}", percent));
 			views.setOnClickPendingIntent(R.id.watttime_appwidget, pendingIntent);
+			
+			//Calculate the icon to use with MAGIC NUMBER TODO FIX.
+			//TODO Remove black magic when changing layout order without changing id names....
+			if (mCarbonCount != 0) {
+				Log.d(tag, "Carbon count is: " + mCarbonCount);
+				if (mCarbonCount < 975) {
+					//set green
+					views.setImageViewResource(R.id.widget_stoplight_1, R.drawable.ic_widget_icon_green);
+				} else if (mCarbonCount > 1075) {
+					//set red
+					views.setImageViewResource(R.id.widget_stoplight_1, R.drawable.ic_widget_icon_red);
+				} else {
+					//set orange. TODO FIX WITH PROPER EXTERNALIZATION.
+					views.setImageViewResource(R.id.widget_stoplight_1, R.drawable.ic_widget_icon_orange);
+				}
+			}
 
 			// Tell the AppWidgetManager to perform an update on the current app widget
 			mAppWidgetManager.updateAppWidget(appWidgetId, views);

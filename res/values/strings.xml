@@ -22,10 +22,12 @@
     
     <!-- Graph string constants -->
     <string name="graph_title">% Clean vs Time</string>
+    <string name="geolocated_graph_title" formatted="false">Clean Energy in %s</string>
     <string name="graph_x_axis">Time</string>
     <string name="graph_y_axis">% Clean</string>
     <string name="series_1_title">Live Data</string>
     <string name="percentage_format" formatted="false">Your energy is %2.1f%% clean</string>
+    <string name="percentage_local_format" formatted="false">How green is %s\'s electricity? %2.1f%% clean.</string>
     
     <string-array name="navigation_array">
         <item>Home</item>

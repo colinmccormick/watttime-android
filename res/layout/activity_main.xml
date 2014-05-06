@@ -20,51 +20,63 @@
             android:layout_centerVertical="true"
             android:indeterminate="true" />
 
-        <TextView
-            android:id="@+id/main_percentage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:gravity="bottom"
-            android:textColor="#FFFFFF"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:visibility="invisible" />
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/generated_content"
+            android:orientation="vertical"
+            android:visibility="invisible" >
 
-        <com.androidplot.xy.XYPlot
-            android:id="@+id/main_xyplot_main"
-            style="@style/GraphStyle"
-            
-            androidPlot.domainLabel="@string/graph_x_axis"
-            androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size"
-            androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
-            androidPlot.rangeLabelWidget.labelPaint.textSize="@dimen/range_label_font_size"
-            androidPlot.rangeLabel="@string/graph_y_axis"
-        	androidPlot.title="@string/graph_title"
-            
-            androidPlot.graphWidget.rangeLabelPaint.textSize="@dimen/range_tick_label_font_size"
-            androidPlot.graphWidget.rangeOriginLabelPaint.textSize="@dimen/range_tick_label_font_size"
-            androidPlot.graphWidget.domainLabelPaint.textSize="@dimen/domain_tick_label_font_size"
-            androidPlot.graphWidget.domainOriginLabelPaint.textSize="@dimen/domain_tick_label_font_size"
-            
-            androidPlot.graphWidget.gridLinePaint.color="#000000"
-            androidPlot.graphWidget.marginBottom="25dp"
-            androidPlot.graphWidget.marginLeft="20dp"
-            androidPlot.graphWidget.marginRight="10dp"
-            androidPlot.graphWidget.marginTop="20dp"
+            <com.androidplot.xy.XYPlot
+                android:id="@+id/main_xyplot_main_main"
+                style="@style/GraphStyle"
+                android:gravity="top"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_weight="1"
+                
+                androidPlot.domainLabel="@string/graph_x_axis"
+                androidPlot.domainLabelWidget.labelPaint.textSize="@dimen/domain_label_font_size"
+                
+                androidPlot.graphWidget.domainLabelPaint.textSize="@dimen/domain_tick_label_font_size"
+                androidPlot.graphWidget.domainOriginLabelPaint.textSize="@dimen/domain_tick_label_font_size"
+                androidPlot.graphWidget.marginBottom="25dp"
+                androidPlot.graphWidget.marginLeft="20dp"
+                androidPlot.graphWidget.marginRight="10dp"
+                androidPlot.graphWidget.marginTop="20dp"
+                androidPlot.graphWidget.rangeLabelPaint.textSize="@dimen/range_tick_label_font_size"
+                androidPlot.graphWidget.rangeOriginLabelPaint.textSize="@dimen/range_tick_label_font_size"
+                
+                androidPlot.legendWidget.heightMetric.value="25dp"
+                androidPlot.legendWidget.iconSizeMetrics.heightMetric.value="15dp"
+                androidPlot.legendWidget.iconSizeMetrics.widthMetric.value="15dp"
+                androidPlot.legendWidget.positionMetrics.anchor="right_bottom"
+                androidPlot.legendWidget.textPaint.textSize="10dp"
+                
+                androidPlot.rangeLabel="@string/graph_y_axis"
+                androidPlot.rangeLabelWidget.labelPaint.textSize="@dimen/range_label_font_size"
+                
+                androidPlot.title="@string/graph_title"
+                androidPlot.titleWidget.labelPaint.textSize="@dimen/title_font_size" />
+            <!--
+             DO NOT ADD androidPlot.renderMode="use_background_thread"
+        	 Seeems like a good idea right?! No, it breaks the graph... Wishlist: XML documentation -->
 
-            androidPlot.legendWidget.heightMetric.value="25dp"
-            androidPlot.legendWidget.iconSizeMetrics.heightMetric.value="15dp"
-            androidPlot.legendWidget.iconSizeMetrics.widthMetric.value="15dp"
-            androidPlot.legendWidget.positionMetrics.anchor="right_bottom"
-            androidPlot.legendWidget.textPaint.textSize="10dp"
-            
-            android:layout_above="@id/main_percentage"
-            android:gravity="top"
-            
-            android:visibility="invisible" />
-        <!-- DO NOT ADD androidPlot.renderMode="use_background_thread"
-        	 Seeems like a good idea right?! No, it breaks the graph... -->
+            <TextView
+                android:id="@+id/main_percentage"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textSize="30sp"
+                android:textColor="#FFFFFF" />
+            <!-- Why are weights opposite.... FIXME? 
+            	Quite the magic number too...-->
+
+        </LinearLayout>
+        
+
     </RelativeLayout>
     <!-- The navigation drawer -->
 

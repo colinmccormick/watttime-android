@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.format.Time;
-import android.util.Log;
 
 
 public class FuelDataPoint implements Parcelable {

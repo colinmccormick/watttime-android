@@ -23,8 +23,10 @@ public class FuelDataList implements Parcelable {
 	private String nextURLtoLoad;
 	private Time lastUpdated;
 	private XYSeries mXYSeries;
+	private double maxVal;
 
 	public FuelDataList(JSONObject jSON, String[] renewables) throws JSONException {
+		maxVal = 0;
 		dataPoints = new ArrayList<FuelDataPoint>(12);
 		mXYSeries = new SimpleXYSeries("Live Data"); //TODO
 		if (jSON != null && jSON.length() != 0) {
@@ -40,7 +42,8 @@ public class FuelDataList implements Parcelable {
 						JSONArray genmix = obj.getJSONArray("genmix");
 						for(int j = 0; j < genmix.length(); j += 1) {
 							JSONObject pt = genmix.getJSONObject(j);
-							fDatPt.addPoint(pt.getString("fuel"), pt.getDouble("gen_MW"));
+							double val = pt.getDouble("gen_MW");
+							fDatPt.addPoint(pt.getString("fuel"), val);
 						}
 						dataPoints.add(dataPoints.size(), fDatPt);
 						addToXYList(fDatPt, renewables);
@@ -128,16 +131,23 @@ public class FuelDataList implements Parcelable {
 				//If the datapoint we're adding was today, go ahead and put it in the XYseries
 				long millis = newTime.toMillis(false);
 				double percent = fDatPt.getPercentGreen(prefs);
-				((SimpleXYSeries) mXYSeries).addLast(millis, percent);
+				((SimpleXYSeries) mXYSeries).addLast(millis, percent); //TODO Make my own XYSeries classes for more speed.
 				Log.i("FuelDataList", "Adding a point: " + newTime.hour +":" + newTime.minute + " , " + percent);
+				
+				//Keep track of the max value we get.
+				if (percent > maxVal) {maxVal= percent;}
 			}
 		}
+	}
+	
+	public double getMax() {
+		return maxVal;
 	}
 
 	/* ------------------------ PARCELABLE METHODS ------------------- */
 	public FuelDataList(Parcel in) throws JSONException {
 		this(new JSONObject(), null); //Had to avoid ambiguous error. (New one to me!)
-		for(FuelDataPoint point : (FuelDataPoint[]) in.readParcelableArray(null)) { //Uses default classloader CHECK?
+		for(FuelDataPoint point : (FuelDataPoint[]) in.readParcelableArray(null)) { //Uses default classloader CHECK? FIXME BROKEN
 			dataPoints.add(point);
 		}
 		nextURLtoLoad = in.readString();

@@ -8,6 +8,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -23,6 +24,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -41,13 +47,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidplot.Plot;
 import com.androidplot.xy.BoundaryMode;
 import com.androidplot.xy.LineAndPointFormatter;
+import com.androidplot.xy.PointLabelFormatter;
+import com.androidplot.xy.XYGraphWidget;
 import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYStepMode;
 import com.github.WattTime.watttime_android.R;
@@ -56,9 +66,14 @@ import com.github.WattTime.watttime_android.DataModels.FuelDataList;
 import com.github.WattTime.watttime_android.Fragments.SettingsFragment;
 
 public class MainActivity extends Activity {
-
+	/* Logcat tag */
+	public static final String tag = "WattTime";
+	
 	/* Activity string with information on current API abbrev.*/
 	private String apiAbbrev;
+	
+	/* Holder for our last found Location state name */
+	private String mLastStateName;
 
 	/* Internal datamodel holding the most recent fuel data. */
 	private FuelDataList mFuelData;
@@ -71,6 +86,7 @@ public class MainActivity extends Activity {
 	private TextView mPercentage;
 	private Menu mMenu;
 	private XYPlot mPlot;
+	private LinearLayout mLinearHolder;
 
 	/*Constant filename for caching data */
 	private final String TEMPFILENAME = "datapoints";
@@ -112,9 +128,12 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		mProgressBar = (ProgressBar) findViewById(R.id.main_progressbar);
-		mPlot = (XYPlot) findViewById(R.id.main_xyplot_main); // For some reason calling this main_xyplot results 
-		// in an exception. What!? 
+		mPlot = (XYPlot) findViewById(R.id.main_xyplot_main_main); // For some reason calling this main_xyplot results 
+		// in an exception. What!? BLACK MAGIC IS HERE. TODO Remove magic.
 		mPercentage = (TextView) findViewById(R.id.main_percentage);
+		Typeface pacifico = Typeface.createFromAsset(getAssets(),"fonts/Pacifico.ttf"); 
+		mPercentage.setTypeface(pacifico);
+		mLinearHolder = (LinearLayout) findViewById(R.id.generated_content);
 		mRes = getResources();
 		mFragMan = getFragmentManager();
 
@@ -184,8 +203,8 @@ public class MainActivity extends Activity {
 
 		// Make the file before the if suite
 		File file = new File(this.getCacheDir(), TEMPFILENAME);
-		Log.d("Fileservice", "making a tempfile");
-		Log.d("Fileservice", file == null ? "null file!" : Long.toString(file.length()) + " size of file");
+		Log.d(tag, "making a tempfile");
+		Log.d(tag, file == null ? "null file!" : Long.toString(file.length()) + " size of file");
 
 		//Load some constants about data age.
 		long MAX_DATA_AGE = mRes.getInteger(R.integer.min_data_refresh);
@@ -193,7 +212,7 @@ public class MainActivity extends Activity {
 
 		// Check to see if we're recreating from a recent bundle
 		if (savedInstanceState != null) {
-			Log.d("onCreate", "trying to create from previous bundle");
+			Log.d(tag, "trying to create from previous bundle");
 			// If we are, then check to see if the location is fresh and close by
 			long TIME_SAVED = savedInstanceState.getLong("time"); 
 			long TIME_DELTA = System.currentTimeMillis() - TIME_SAVED;
@@ -202,7 +221,7 @@ public class MainActivity extends Activity {
 
 			// Try and get the saved abbrev (save an api call)
 			if (TIME_DELTA < MAX_DATA_AGE && DISTANCE_DELTA < MAX_DISTANCE) {
-				Log.d("MainActivity", "Getting apiabbrev from stored data.");
+				Log.d(tag, "Getting apiabbrev from stored data.");
 				String savedAb = savedInstanceState.getString("apiAbbrev");
 				FuelDataList fuelData = (FuelDataList) savedInstanceState.getParcelable("data");
 				if (savedAb != null && fuelData != null) { //Check to see if we got decent data from the bundle
@@ -214,7 +233,7 @@ public class MainActivity extends Activity {
 		//Check to see if we can recreate from cached data
 		//PrefRefreshed will be true if we just refreshed the data, so don't do it again
 		} else if (file != null && file.length() > 0 && !prefRefreshed) {
-			Log.d("Lifecycle", "The saved file exists, checking it.");
+			Log.d(tag, "The saved file exists, checking it.");
 			JSONArray jSON = null;
 			try {
 				//Read our saved file
@@ -234,25 +253,25 @@ public class MainActivity extends Activity {
 
 				//If they are, then file is OK to create from.
 				if (DISTANCE_DELTA < MAX_DISTANCE) {
-					Log.d("Lifecycle", "File was good to pull api abbrev from");
+					Log.d(tag, "File was good to pull api abbrev from");
 					String url = jSON.getJSONObject(0).getString("next");
-					Log.d("url", url);
+					Log.d(tag, url);
 					if (!url.equals("null") && url != null) { //Need to check and see if it pulled this correctly.
 						//If it didn't it's a corrupt save file.
 						//Furthermore check for the JSON null (Which is different from regular null)
 						apiAbbrev = pullApiAbbrev(url);
 						if (TIME_DELTA < MAX_DATA_AGE) {
-							Log.d("Lifecycle", "File was good to pull old data from");
+							Log.d(tag, "File was good to pull old data from");
 							doPostPercentGet(jSON, false, true);
 						}
 					}
 				}
 			} catch (JSONException e) {
-				Log.e("MainActivity", "Couldn't create from saved json");
+				Log.e(tag, "Couldn't create from saved json");
 				//This means our savefile was so corrupt it couldn't load, but it's
 				//a nonfatal error, because it can reload the data from the server.
 			} catch (FileNotFoundException e) {
-				Log.wtf("Files", "Should never get here because it checks if the file's length is nonzero");
+				Log.wtf(tag, "Should never get here because it checks if the file's length is nonzero");
 			}
 		}
 		//So somewhere we didn't pick up the correct data or it needs to be re downloaded
@@ -291,7 +310,7 @@ public class MainActivity extends Activity {
 	 */
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
-		Log.d("MA", "Saving Instance state");
+		Log.d(tag, "Saving Instance state");
 		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		String locationProvider = LocationManager.NETWORK_PROVIDER; //Change to GPS_PROVIDER for fine loc
 		Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
@@ -327,27 +346,90 @@ public class MainActivity extends Activity {
 
 	private boolean launchGraph() {
 		if (mPlot == null || mFuelData == null || mFuelData.size() == 0) {
-			Log.e("LaunchGraph", "You tried to launch a graph without data");
+			Log.e(tag, "You tried to launch a graph without data");
 			return false;
 		} else {
-			Log.d("LaunchGraph", "Launching the graph");
+			Log.d(tag, "Launching the graph");
 			class GraphGet extends AsyncTask<Context, Void, Boolean> {
 				@Override
 				protected Boolean doInBackground(Context... context) {
+					//This is all awful, I want to put this in XML ;_;
+					Resources res = context[0].getResources();
+					
+					//Set title
+					if (mLastStateName == null) {
+						long startTime = System.currentTimeMillis();
+						LocationManager locationManager = (LocationManager) context[0].getSystemService(Context.LOCATION_SERVICE);
+						String locationProvider = LocationManager.NETWORK_PROVIDER;
+						Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+						Geocoder geocoder = new Geocoder(context[0], Locale.getDefault());
+						if (Geocoder.isPresent()) {
+							List<Address> addresses;
+							try {
+								final int NUM_RESULTS = 1;
+								addresses = geocoder.getFromLocation(lastKnownLocation.getLatitude(), 
+										lastKnownLocation.getLongitude(), NUM_RESULTS);
+								String state = addresses.get(0).getAdminArea();
+								mLastStateName = state;
+								//mPercentage.setText(String.format(res.getString(R.string.percentage_local_format), mLastStateName, mFuelData.getCurrentPercent(mRenewPrefs) * 100, Locale.US));
+								Log.i(tag, "Geocode took " + (System.currentTimeMillis() - startTime) + "ms");
+							} catch (IOException e) {
+								Log.w(tag, e);
+							}
+						} else {
+							Log.i(tag, "Geocode failed, going to default title");
+						}
+						String titleStem = res.getString(R.string.geolocated_graph_title);
+						mPlot.setTitle(String.format(titleStem, mLastStateName, Locale.US));
+						
+						
+					}
+					
 					// Set up the range behavior
-				    mPlot.setRangeBoundaries(0, BoundaryMode.FIXED, 1, BoundaryMode.SHRINNK); //Oh my god it's spelled wrong in the library.
+					double max = mFuelData.getMax();
+					final double MARGIN = 0.1; //TODO Externalize
+					//TODO resize plot when refresh data is outside our current max.
+				    mPlot.setRangeBoundaries(0, BoundaryMode.FIXED, max + MARGIN, BoundaryMode.FIXED);
 					mPlot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, 0.1);
 					NumberFormat rangeFormat = NumberFormat.getPercentInstance();
 					mPlot.setRangeValueFormat(rangeFormat);
 
 					//Set up the domain behavior. 
 					mPlot.setDomainValueFormat(new SimpleDateFormat("ha", Locale.US));
-
-					//Set up the line format
-					LineAndPointFormatter series1Format = new LineAndPointFormatter();
-					series1Format.setPointLabelFormatter(null);
-					series1Format.configure(context[0], R.xml.line_point_formatter_with_plf1);
+					final double MAGIC_PIXEL_VALUE = 150; //TODO make this work for multiple screen sizes and externalize.
+					mPlot.setDomainStep(XYStepMode.INCREMENT_BY_PIXELS, MAGIC_PIXEL_VALUE);
 					
+					//Set up background color
+					Paint p = new Paint();
+					p.setColor(Color.TRANSPARENT); //TODO Externalize this..
+					//mPlot.setBackgroundPaint(p);
+					
+					
+					//Get the graph widget (Method not in javadocs, cool, right!?)
+					XYGraphWidget mWid = mPlot.getGraphWidget();
+					mWid.setRangeGridLinePaint(p);
+					mWid.setDomainGridLinePaint(p);
+					
+					//This gets rid of the gray grid
+					mWid.getGridBackgroundPaint().setColor(Color.TRANSPARENT);
+					
+					//This gets rid of the dark grey grid.
+					mPlot.getGraphWidget().getBackgroundPaint().setColor(Color.TRANSPARENT);
+
+					mPlot.setBorderStyle(Plot.BorderStyle.SQUARE, null, null);
+					mPlot.getBorderPaint().setColor(Color.TRANSPARENT); //Should work, right?
+					//mPlot.setBorderPaint(null);
+					mPlot.getBackgroundPaint().setColor(Color.parseColor("#002C3C"));
+					//mPlot.setPlotMargins(0, 0, 0, 0);
+					
+					//Set up the line format
+					LineAndPointFormatter series1Format = new LineAndPointFormatter(
+			                Color.rgb(0, 200, 0),                   // line color
+			                null,                   				// point color
+			                null,                                   // fill color (none)
+			                new PointLabelFormatter(Color.WHITE));
+					series1Format.setPointLabelFormatter(null);
+					//series1Format.configure(context[0], R.xml.line_point_formatter_with_plf1);
 					//Add the data to the chart
 					mPlot.addSeries(mFuelData.getLastDayPoints(), series1Format);
 					return true;
@@ -355,7 +437,16 @@ public class MainActivity extends Activity {
 				@Override
 				protected void onPostExecute(Boolean success) {
 					if (success) {
+						if (mLastStateName != null) {
+							mPercentage.setText(String.format(getString(R.string.percentage_local_format), mLastStateName, mFuelData.getCurrentPercent(mRenewPrefs) * 100, Locale.US));
+						} else {
+							double d = mFuelData.getCurrentPercent(mRenewPrefs);
+							String percentFormat = mRes.getString(R.string.percentage_format);
+							String percent = String.format(Locale.US, percentFormat, d * 100);
+							mPercentage.setText(percent);
+						}
 						mPlot.setVisibility(View.VISIBLE);
+						mLinearHolder.setVisibility(View.VISIBLE);
 					} else {
 						throwFatalAppError();
 					}
@@ -373,21 +464,23 @@ public class MainActivity extends Activity {
 		setFrag = true;
 		SettingsFragment test = (SettingsFragment) getFragmentManager().findFragmentByTag("settingsTag");
 		if (test != null && test.isVisible()) {
-			Log.d("Settings frag", "Refused to open another settingsfragment");
+			Log.d(tag, "Refused to open another settingsfragment");
 			return false;
 		}
 
 		// Hide the progressbar/percentage indicators before launching the fragment.
 		if (mProgressBar != null && mProgressBar.getVisibility() == View.VISIBLE) {
-			mProgressBar.setVisibility(View.INVISIBLE);
-			Log.d("SettingsFragment", "Changing visiblity of progressbar to invisible.");
+			mProgressBar.setVisibility(View.VISIBLE);
+			Log.d(tag, "Changing visiblity of progressbar to invisible.");
 		} else if (mPercentage != null && mPercentage.getVisibility() == View.VISIBLE) {
 			mPercentage.setVisibility(View.INVISIBLE);
-			Log.d("SettingsFragment", "Changing visiblity of percentage to invisible");
+			mLinearHolder.setVisibility(View.INVISIBLE);
+			Log.d(tag, "Changing visiblity of percentage to invisible");
 		} 
 		if (mPlot != null && mPlot.getVisibility() == View.VISIBLE) {
-			Log.d("SettingsFragment", "Changing visiblity of graph to invisible");
+			Log.d(tag, "Changing visiblity of graph to invisible");
 			mPlot.setVisibility(View.INVISIBLE);
+			mLinearHolder.setVisibility(View.INVISIBLE);
 		}
 		mMenu.setGroupVisible(R.id.hide_when_drawer, false);
 		mFragMan
@@ -397,15 +490,17 @@ public class MainActivity extends Activity {
 			public void onDestroy() {
 				setFrag = false;
 				if (mProgressBar != null && mProgressBar.getVisibility() == View.INVISIBLE) {
-					Log.d("SettingsFragment", "Changing visiblity of progressbar back to visible.");
+					Log.d(tag, "Changing visiblity of progressbar back to visible.");
 					mProgressBar.setVisibility(View.VISIBLE);
 				} else if (mPercentage != null && mPercentage.getVisibility() == View.INVISIBLE) {
-					Log.d("SettingsFragment", "Changing visiblity of percentage back to visible");
+					Log.d(tag, "Changing visiblity of percentage back to visible");
 					mPercentage.setVisibility(View.VISIBLE);
+					mLinearHolder.setVisibility(View.VISIBLE);
 				} 
 				if (mPlot != null && mPlot.getVisibility() == View.INVISIBLE) {
-					Log.d("SettingsFragment", "Changing visiblity of graph back to visible");
+					Log.d(tag, "Changing visiblity of graph back to visible");
 					mPlot.setVisibility(View.VISIBLE);
+					mLinearHolder.setVisibility(View.VISIBLE);
 					if (preferencesChanged()) {
 						refreshData(true);
 					}
@@ -435,27 +530,27 @@ public class MainActivity extends Activity {
 			switch (position) {
 			case 0:
 				//HOME
-				Log.d("nav drawer", "home");
+				Log.d(tag, "home");
 				//If settingsfrag is present and visible, close it.
 				SettingsFragment settingsFrag = (SettingsFragment) mFragMan.findFragmentByTag("settingsTag");
 				if (settingsFrag != null && settingsFrag.isVisible()) {
-					Log.d("Settings frag", "Closing settingsfragment");
+					Log.d(tag, "Closing settingsfragment");
 					mFragMan.popBackStackImmediate();
 				}
 				break;
 			case 1:
 				//EMBEDDED DEVICES
-				Log.d("nav drawer", "embedded dev");
+				Log.d(tag, "embedded dev");
 				launchEmbeddedDevices();
 				break;
 			case 2:
 				//SETTINGS
-				Log.d("nav drawer", "settings");
+				Log.d(tag, "settings");
 				launchSettingsFragment();
 				break;
 			case 3:
 				//ABOUT
-				Log.d("nav drawer", "about");
+				Log.d(tag, "about");
 				launchAboutFragment();
 				break;
 			}
@@ -532,13 +627,13 @@ public class MainActivity extends Activity {
 		/*Process JSON */
 		if (jSON.length() < 1) {
 			throwFatalServerError();
-			Log.w("JSON Parse", "Didn't have an iso for this location.");
+			Log.w(tag, "Didn't have an iso for this location.");
 			return null;
 		}
 		try {
 			abbrev = jSON.getJSONObject(0).getString("abbrev");
 		} catch (JSONException e) {
-			Log.e("GetAPIData", "Error parsing Json (#2)");
+			Log.e(tag, "Error parsing Json (#2)");
 			return null;
 		}
 		return abbrev;
@@ -549,12 +644,11 @@ public class MainActivity extends Activity {
 			return null;
 		}
 		mRenewPrefs = getRenewablePrefs();
-		Log.d("Attempting to parse JSON", jSON.toString());
-		Log.d("Renewableprefs", Arrays.toString(mRenewPrefs));
+		Log.d(tag, Arrays.toString(mRenewPrefs));
 		try { //TODO check for length of json and add to existing list if it's short.
 			return new FuelDataList(jSON.getJSONObject(0), mRenewPrefs);
 		} catch (JSONException e) {
-			Log.e("MainActivity", "Couldn't parse something somewhere.");
+			Log.e(tag, "Couldn't parse something somewhere.");
 			e.printStackTrace();
 			throwFatalServerError();
 			return null;
@@ -576,7 +670,7 @@ public class MainActivity extends Activity {
 	}
 
 	private void getAbbrev(Location lastKnownLocation) {
-		Log.d("MainActivity", "Pulling the ApiAbbrev from the server");
+		Log.d(tag, "Pulling the ApiAbbrev from the server");
 		new APIGet() {
 			@Override
 			protected void onPostExecute(JSONArray jSON) {
@@ -591,7 +685,7 @@ public class MainActivity extends Activity {
 			throwFatalNetworkError();
 			return false;
 		}
-		Log.i("MA", "Refreshing my data");
+		Log.i(tag, "Refreshing my data");
 		final boolean replaceData = force;
 		if (apiAbbrev == null) {
 			// Get the last known network (coarse) location
@@ -637,23 +731,26 @@ public class MainActivity extends Activity {
 					mFuelData.addPoints(jSON, mRenewPrefs);
 				} catch (JSONException e) {
 					throwFatalServerError();
-					Log.e("DPPGET", "Fatal server err parsing json");
+					Log.e(tag, "Fatal server err parsing json");
 				}
 			}
 
 			//We have to check if our data is actually there. (Weird edge case error)
 			if (mFuelData.size() > 0) {
-				Log.d("dppget", "Launching views");
+				Log.d(tag, "Launching views");
 				launchViews();
 			} else if (apiAbbrev == null || mFuelData.size() <= 0) {
-				Log.e("dppget", "Missing data, failed to load.");
+				Log.e(tag, "Missing data, failed to load.");
+				//This might mean it was midnight and your phone turned into a pumpkin...
+				//TODO FIX midnight error
+				throwFatalAppError();
 			}
 		}
 
 		//Save our JSON to a file so we might not need to get it next time.
 		if (saveIt) {
 			File file;
-			Log.d("Saving", "Saving my JSON to a file.");
+			Log.d(tag, "Saving my JSON to a file.");
 
 			// Get the last known network (coarse) location
 			LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -665,7 +762,7 @@ public class MainActivity extends Activity {
 				loc.put("lon", lastKnownLocation.getLongitude());
 				jSON.put(1, loc);
 			} catch (JSONException e1) {
-				Log.w("JSONSave", "Couldn't store latlon!");
+				Log.w(tag, "Couldn't store latlon!");
 			}
 			try {
 				file = new File(this.getCacheDir(), TEMPFILENAME);
@@ -674,19 +771,17 @@ public class MainActivity extends Activity {
 				fw.flush();
 				fw.close();
 			} catch (IOException e) {
-				Log.w("PostPercentGet", "Couldn't write my JSON to a file");
+				Log.w(tag, "Couldn't write my JSON to a file");
 			}
 		}
 	}
 
 	private void launchViews() {
 		launchGraph();
-		double d = mFuelData.getCurrentPercent(mRenewPrefs);
-		String percentFormat = mRes.getString(R.string.percentage_format);
-		String percent = String.format(Locale.US, percentFormat, d * 100);
-		mPercentage.setText(percent);
+
 		mProgressBar.setVisibility(View.GONE);
 		mPercentage.setVisibility(View.VISIBLE);
+		//mLinearHolder.setVisibility(View.VISIBLE);
 	}
 
 
@@ -699,8 +794,8 @@ public class MainActivity extends Activity {
 	 */
 	private String makeAbUrl(Location loc) {
 		//Debug info
-		Log.d("MainActivity", Double.toString(loc.getLatitude()));
-		Log.d("MainActivity", Double.toString(loc.getLongitude()));
+		Log.d(tag, Double.toString(loc.getLatitude()));
+		Log.d(tag, Double.toString(loc.getLongitude()));
 
 		//Form API Url
 		double lon = loc.getLongitude();
@@ -737,20 +832,20 @@ public class MainActivity extends Activity {
 		String end = endTime.format3339(false);
 		String pageSize;
 		String freq;
-		Log.d("IQ NUM", Integer.toString(internetQual));
+		Log.d(tag, Integer.toString(internetQual));
 		switch (internetQual) {
 		case HIGH_QUALITY:
-			Log.d("IQ", "high");
+			Log.d(tag, "high");
 			pageSize = "144"; //TODO FIX to 5m and 288.... API is too slow (20seconds as of now)
 			freq = "10m";
 			break;
 		case MED_QUALITY:
-			Log.d("IQ", "med");
+			Log.d(tag, "med");
 			pageSize = "144";
 			freq = "10m";
 			break;
 		default:
-			Log.d("IQ", "low");
+			Log.d(tag, "low");
 			pageSize = "24";
 			freq = "1h";
 			break;
@@ -764,7 +859,7 @@ public class MainActivity extends Activity {
 	 * @suppress magic
 	 */
 	private String pullApiAbbrev(String url) {
-		Log.d("Pulling API Abbrev", url);
+		Log.d(tag, url);
 		return url.substring(61, (url.indexOf('&') == -1) ? url.length() : url.indexOf('&'));
 	}
 
@@ -781,7 +876,7 @@ public class MainActivity extends Activity {
 					}
 				} catch (ClassCastException e) {
 					//Error ignored because of non boolean prefs, which we don't care about..
-					Log.i("Get Renew Prefs", "Cast error, pass.");
+					Log.i(tag, "Cast error, pass.");
 				}
 			}
 		}
@@ -792,7 +887,7 @@ public class MainActivity extends Activity {
 
 	private boolean preferencesChanged() {
 		if (mRenewPrefs == null) {
-			Log.d("prefs", "Preferences did not change.");
+			Log.d(tag, "Preferences did not change.");
 			mRenewPrefs = getRenewablePrefs();
 			return false;
 		} else {
@@ -826,21 +921,21 @@ public class MainActivity extends Activity {
 		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 		switch (networkInfo.getType()) {
 		case ConnectivityManager.TYPE_WIFI:
-			Log.d("Internet quality", "High");
+			Log.d(tag, "High");
 			return HIGH_QUALITY;
 		case ConnectivityManager.TYPE_BLUETOOTH:
-			Log.d("Internet quality", "High");
+			Log.d(tag, "High");
 			return HIGH_QUALITY;
 		case ConnectivityManager.TYPE_MOBILE:
 			if (networkInfo.isRoaming()) {
-				Log.d("Internet quality", "Low");
+				Log.d(tag, "Low");
 				return LOW_QUALITY;
 			} else {
-				Log.d("Internet quality", "Med");
+				Log.d(tag, "Med");
 				return MED_QUALITY;
 			}
 		default:
-			Log.d("Internet quality", "Low");
+			Log.d(tag, "Low");
 			return LOW_QUALITY;
 		}
 	}
