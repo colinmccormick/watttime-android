@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/about_logo" 
+        android:contentDescription="WattTime Logo"/>
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:padding="10sp"
+        android:layout_below="@+id/imageView1"
+        android:layout_marginTop="0dp"
+        android:gravity="center_horizontal"
+        android:textSize="20sp"
+        android:text="With WattTime, you have the choice to use electricity from energy sources you believe in. Energy too dirty right now? Just wait an hour, it might be cleaner!\n\nThis app was built by Nick Firmani with the support of WattTime and the UC Berkeley CITRIS Mobile App Challenge. \n\nFollow us at @wattTime." />
+
+</RelativeLayout>
