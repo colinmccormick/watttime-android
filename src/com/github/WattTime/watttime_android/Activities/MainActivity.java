@@ -286,8 +286,10 @@ public class MainActivity extends Activity {
 			}
 		}
 		//So somewhere we didn't pick up the correct data or it needs to be re downloaded
-
-		if (apiAbbrev == null) {
+		if (lastKnownLocation == null) {
+			throwFatalAppError();
+			//TODO fix with location error.
+		} else if (apiAbbrev == null) {
 			getAbbrev(lastKnownLocation);
 		} else if (mFuelData == null) {
 			//API abbrev was retrieved from the stored data but not the percent data.
@@ -811,6 +813,11 @@ public class MainActivity extends Activity {
 			LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 			String locationProvider = LocationManager.NETWORK_PROVIDER;
 			Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+			if (lastKnownLocation == null) {
+				throwFatalAppError();
+				return false;
+				//TODO find out what to do when location isn't available.
+			}
 			getAbbrev(lastKnownLocation);
 		} else {
 			String url;
